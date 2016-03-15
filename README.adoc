@@ -1,0 +1,11 @@
+JCache hackathon
+
+Prerequisites
+
+Download Payara server: http://www.payara.fish/downloads
+
+Extract Payara server
+
+Run the database: <payara-home>/javadb/startNetworkServer
+
+Start Payara server: <payara-home>/bin/asadmin start-domain

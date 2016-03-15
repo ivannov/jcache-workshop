@@ -35,7 +35,7 @@ public class LoginController {
             return "redirect:/login";
         } else {
             userContext.setCurrentUser(foundUser);
-            return "redirect:/";
+            return "redirect:/comment";
         }
     }
 }
