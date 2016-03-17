@@ -17,10 +17,6 @@ public class UserContext implements Serializable {
 
     private User currentUser;
 
-    public UserContext() {
-        this.currentUser = TestDataInserter.DEFAULT_USER;
-    }
-
     @Produces
     @LoggedIn
     public User getCurrentUser() {

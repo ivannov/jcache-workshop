@@ -16,7 +16,7 @@ import java.io.IOException;
 /**
  * @author Ivan St. Ivanov
  */
-@WebFilter(urlPatterns = "/content")
+@WebFilter(urlPatterns = "/app/comment")
 public class LoggedInUserFilter implements Filter {
 
     @Inject
@@ -26,12 +26,13 @@ public class LoggedInUserFilter implements Filter {
     public void init(FilterConfig filterConfig) throws ServletException {
     }
 
-    @Override public void doFilter(ServletRequest request, ServletResponse response,
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response,
             FilterChain chain) throws IOException, ServletException {
         if (userContext.getCurrentUser() != null) {
             chain.doFilter(request, response);
         } else {
-            ((HttpServletResponse)response).sendRedirect("app/login");
+            ((HttpServletResponse)response).sendRedirect("login");
         }
     }
 
