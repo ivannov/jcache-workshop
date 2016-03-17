@@ -6,6 +6,7 @@
 </head>
 <body>
     <h1>Bulgarian JUG guest book</h1>
+    Hello, <c:out value="${userFirstName}"/>
     <a href="newcomment">Add comment</a>
     <table>
         <tr>

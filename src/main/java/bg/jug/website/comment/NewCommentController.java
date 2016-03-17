@@ -46,7 +46,7 @@ public class NewCommentController {
 
     @POST
     @ValidateOnExecution(type = ExecutableType.NONE)
-    public Response submitSessionProposal(@Valid @BeanParam CommentModel submission) {
+    public Response submitComment(@Valid @BeanParam CommentModel comment) {
         if (br.isFailed()) {
             String errorMessage = br.getAllViolations().stream()
                     .map(ConstraintViolation::getMessage)
@@ -55,7 +55,7 @@ public class NewCommentController {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("newComment.jsp").build();
         }
-        Comment newComment = new Comment(submission.getTitle(), submission.getContent(), currentUser);
+        Comment newComment = new Comment(comment.getTitle(), comment.getContent(), currentUser);
         commentsManager.submitComment(newComment);
         return Response.seeOther(URI.create("comment")).build();
     }

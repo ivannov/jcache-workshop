@@ -36,6 +36,7 @@ public class CommentsController {
     @Path("/currentUser")
     public String showAllCommentsFromCurrentUser() {
         models.put("comments", commentsManager.getSessionsForUser(currentUser));
+        models.put("userFirstName", currentUser.getFirstName());
         return "comments.jsp";
     }
 

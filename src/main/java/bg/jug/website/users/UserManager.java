@@ -3,19 +3,20 @@ package bg.jug.website.users;
 import bg.jug.website.entities.User;
 
 import javax.ejb.Stateless;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.util.List;
 
 /**
  * @author Ivan St. Ivanov`
  */
-@Stateless
 public class UserManager {
 
-    @PersistenceContext
+    @Inject
     private EntityManager em;
 
     public User getUser(String userName, String password) {
@@ -27,5 +28,10 @@ public class UserManager {
         } catch (NoResultException nre) {
             return null;
         }
+    }
+
+    @Transactional
+    public void addUser(User newUser) {
+        em.persist(newUser);
     }
 }
