@@ -1,11 +1,50 @@
-JCache hackathon
+= Adopt-a-JSR workshop: JCache
 
-Prerequisites
+== Introduction (10 mins)
 
-Download Payara server: http://www.payara.fish/downloads
+=== JCache
 
-Extract Payara server
+=== Payara
 
-Run the database: <payara-home>/javadb/startNetworkServer
+Payara is a Java application server derived from the Glassfish code base. 
 
-Start Payara server: <payara-home>/bin/asadmin start-domain
+== Prerequisites (20 mins) 
+
+=== Setup your IDE for Java EE development
+
+Download Eclipse, IntelliJ or NetBeans with JavaEE support: 
+
+ - Eclipse for Java EE developers package can be downloaded from http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/mars2;
+ - IntelliJ community edition can be downloaded from https://www.jetbrains.com/idea/download (unless you have license for the Ultimate edition that provides better support for Java EE development);
+ - NetBeans with Java EE support can be downloaded from https://netbeans.org/downloads/
+
+=== Setup Payara server
+
+ 1. Download Payara server full (latest version) from http://www.payara.fish/downloads
+ 2. Extract the Payara server zip to a proper directory (e.g. D:\Software)
+ 3. Run the Java DB RDBMS that comes with Payara by executing the D:\Software\payara-4.1.1.161.1\payara41\javadb\bin\startNetworkServer script. 
+    Note that Java DB (also known as Apache Derby) is also shipped with Glassfish distributions.
+    By default the Java DB server accepts connections on port 1527. 
+ 4. Start Payara server using the asadmin script as follows: 
+ 	D:\Software\payara-4.1.1.161.1\payara41\bin\asadmin start-domain
+ 5. Verify that server is started by logging in the admin interface at http://localhost:4848/ (Payara uses a modified version of the Glassfish admin interface)
+	If the admin interface does not load the check the Payara logs at D:\software\payara-4.1.1.161.1\payara41\glassfish\domains\domain1\logs errors during initialization.
+	
+== Guide (60 mins)
+
+=== Checkout demo projects: Guestbook
+
+=== Enable JCache
+
+=== Utilize additional JCache APIs
+
+=== Refactor project to use CDI
+
+== References
+
+
+
+
+
+
+
