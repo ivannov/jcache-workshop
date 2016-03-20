@@ -4,9 +4,11 @@
 
 === JCache
 
+JCache, apart from being one of the longest running JSRs (about 13 years from 2001 to 2014), is a Java API that provides a unified mechanism for interacting with various caching implementations. The operations provided by the API allow for a uniform way to access, update, create and remove entries from a cache.
+
 === Payara
 
-Payara is a Java application server derived from the Glassfish code base. 
+Payara is a Java application server derived from the Glassfish code base. Support for JCache is provided to Payara by means of the Hazelcast JCache provider.
 
 == Prerequisites (20 mins) 
 
@@ -25,26 +27,78 @@ Download Eclipse, IntelliJ or NetBeans with JavaEE support:
  3. Run the Java DB RDBMS that comes with Payara by executing the D:\Software\payara-4.1.1.161.1\payara41\javadb\bin\startNetworkServer script. 
     Note that Java DB (also known as Apache Derby) is also shipped with Glassfish distributions.
     By default the Java DB server accepts connections on port 1527. 
- 4. Start Payara server using the asadmin script as follows: 
+ 4. Start Payara server using the asadmin script as follows: +
+ 	----
  	D:\Software\payara-4.1.1.161.1\payara41\bin\asadmin start-domain
+ 	----
+
  5. Verify that server is started by logging in the admin interface at http://localhost:4848/ (Payara uses a modified version of the Glassfish admin interface)
 	If the admin interface does not load the check the Payara logs at D:\software\payara-4.1.1.161.1\payara41\glassfish\domains\domain1\logs errors during initialization.
 	
 == Guide (60 mins)
 
-=== Checkout demo projects: Guestbook
+=== Setup demo project: Guestbook
 
+ 1. Clone the Guestbook project to a proper location: + 
+	----
+	git clone https://github.com/bgjug/jcache-workshop.git guestbook
+	----
+
+ 2. Import the project as a Maven project in your IDE of choice (e.g. for Eclipse: File -> Import -> Existing Maven Projects)
+ 3. Add Payara (Glassfish 4) deployment support for in our IDE. For Eclipse add a new server from the Servers view in Eclipse (Window -> Show View -> Servers) by right clicking in the view and selecting *Glassfish 4* from the *Glassfish* category. 
+ As a name specify *Payara*, as a location specify *D:/software/payara-4.1.1.161.1/payara41/glassfish* and as a Java Development Kit specify JDK 8 (must be installed on your system and added as a Runtime environment from Window -> Preferences in Eclipse). 
+ After you finish creating the server right click on it from the server view and select 'Add or Remove', select the 'guestbook' project for deployment and click *Finish*. 
+ 4. Verify that when the project is synchronized with the server you are able to launch it by navigating to the *Applications* tab in the Payara admin panel and clicking the 'Launch' action next to the deployed *guestbook* application.
+ 	
 === Enable JCache
+
+- Cache::put
+- Cache::get
+- Cache::remove
 
 === Utilize additional JCache APIs
 
+- EntryProcessor
+- CacheEntryListeners
+- ExpiryPolicy
+- CacheWriter / CacheReader?/CacheLoader
+
 === Refactor project to use CDI
+
+=== Summary
+
+How many times faster is the application with JCache ?
 
 == References
 
-
-
-
-
-
+[bibliography]
+.JCache overview
+ - JSR 107: JCache - Java Temporary Caching API: https://jcp.org/en/jsr/detail?id=107
+ - Introduction to JCache JSR 107: https://dzone.com/articles/introduction-jcache-jsr-107
+ - Sneak peek into the JCache API: https://www.javacodegeeks.com/2015/02/sneak-peek-jcache-api-jsr-107.html
+ - JCache, why and how ?: https://vaadin.com/blog/-/blogs/jcache-why-and-how-
+ - JCache is Final! I Repeat: JCache is Final!
+ - Java Caching: Strategies and the JCache API
+ - How to speed up your application using JCache: https://www.jfokus.se/jfokus16/preso/How-to-Speed-Up-Your-Application-using-JCache.pdf
+ - After 13 years, JCache specification is finally complete: http://sdtimes.com/13-years-jcache-specification-finally-complete/ +
+[bibliography]
+.JCache support
+ - Hazelcast blogs (JCache category): http://blog.hazelcast.com/category/jcache/
+ - Hazelcast JCache implementation: http://docs.hazelcast.org/docs/3.3/manual/html-single/hazelcast-documentation.html#hazelcast-jcache-implementation
+ - Hazelcast 3.5 Manual: Introduction to the JCache API: http://docs.hazelcast.org/docs/3.5/manual/html/jcache-api.html
+ - Infinispan JCache support: http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_using_infinispan_as_a_jsr107_jcache_provider
+ - Infinispan JCache example: http://infinispan.org/tutorials/simple/jcache/
+ - Oracle Coherence JCache support: https://docs.oracle.com/middleware/1213/coherence/develop-applications/jcache_intro.htm#COHDG5778
+ - Ehcache JCache support: https://github.com/ehcache/ehcache-jcache
+ - Apache Ignite JCache provider: https://ignite.apache.org/use-cases/caching/jcache-provider.html
+ - Google App Engine support for JCache: https://cloud.google.com/appengine/docs/java/memcache/usingjcache
+ - Couchbase JCache Implementation Developer Preview 2: http://blog.couchbase.com/jcache-dp2
+ - Couchbase JCache implementation: https://github.com/couchbaselabs/couchbase-java-cache
+ - JCache (Payara 4.1.153): https://github.com/payara/Payara/wiki/JCache-(Payara-4.1.153) +
+ - Spring JCache annotations support: https://spring.io/blog/2014/04/14/cache-abstraction-jcache-jsr-107-annotations-support 
+[bibliography]
+.JCache & CDI
+ - Using JCache with CDI: http://www.tomitribe.com/blog/2015/06/using-jcache-with-cdi/ 
+ - High Performace Java EE with JCache and CDI: http://www.slideshare.net/Payara1/high-performance-java-ee-with-jcache-and-cdi
+ - Using the JCache API with CDI on Payara server: http://blog.payara.fish/using-the-jcache-api-with-cdi-on-payara-server
 
