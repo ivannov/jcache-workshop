@@ -8,6 +8,9 @@ import javax.mvc.Models;
 import javax.mvc.annotation.Controller;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+import java.net.URI;
 
 /**
  * @author Ivan St. Ivanov
@@ -20,6 +23,9 @@ public class CommentsController {
     private CommentsManager commentsManager;
 
     @Inject
+    private MessagesBean messagesBean;
+
+    @Inject
     @LoggedIn
     private User currentUser;
 
@@ -29,15 +35,18 @@ public class CommentsController {
     @GET
     public String showAllComments() {
         models.put("comments", commentsManager.getAllComments());
+        models.put("user", currentUser);
         return "comments.jsp";
     }
 
     @GET
-    @Path("/currentUser")
-    public String showAllCommentsFromCurrentUser() {
-        models.put("comments", commentsManager.getSessionsForUser(currentUser));
-        models.put("userFirstName", currentUser.getFirstName());
-        return "comments.jsp";
+    @Path("/delete")
+    public Response deleteComment(@QueryParam("commentId") Long commentId) {
+        if (currentUser.isAdmin()) {
+            commentsManager.deleteCommentWithId(commentId);
+        } else {
+            messagesBean.setMessage("Only admin users are allowed to delete comments");
+        }
+        return Response.seeOther(URI.create("comment")).build();
     }
-
 }

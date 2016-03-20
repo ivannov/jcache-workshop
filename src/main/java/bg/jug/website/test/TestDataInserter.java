@@ -16,8 +16,6 @@ import javax.persistence.PersistenceContext;
 @Startup
 public class TestDataInserter {
 
-    public static User DEFAULT_USER;
-
     @PersistenceContext
     private EntityManager em;
 
@@ -27,43 +25,34 @@ public class TestDataInserter {
         em.createQuery("DELETE FROM User").executeUpdate();
 
         User mitya = new User("mitya", "mitya", "Dmitriy", "Alexandrov");
-        User vassil = new User("vassil", "vassil", "Vassil", "Dichev");
-        User nayden = new User("nayden", "nayden", "Nayden", "Gochev");
+        User misho = new User("misho", "misho", "Mihail", "Stoynov");
+        User nayden = new User("nayden", "nayden", "Nayden", "Gochev", true);
         User martin = new User("martin", "martin", "Martin", "Toshev");
 
-        DEFAULT_USER = nayden;
-
-        Comment nashorn = new Comment("Nashorn: JavaScript runtime for JVM",
-                "- Java(Script) � overview of Nashorn\n" +
-                    "� Description of the IDE for developing Nashorn applications\n" +
-                    "� Project Avatar",
+        Comment myfear = new Comment("@myfear",
+                "Great! Great! GREAT!! @myfear will speak at @jPrimeConf 2016!!!",
                 mitya);
-        Comment scala = new Comment("Scala- one step ahead",
-                "Did you know that the current javac compiler is written by the creator of the Scala language?",
-                vassil);
-        Comment springMvc = new Comment("Introduction to Spring & Spring MVC",
-                "The lecture will explain the idea of Spring and IoC conrainers, then we will look at Spring MVC which " +
-                        "is the most commonly used MVC framework in the Java space.",
+        Comment photo = new Comment("Photo",
+                "\"Never a straight face :(\" (my mom when i was a kid) ",
+                misho);
+        Comment vars = new Comment("var in Java",
+                "I dont think you will be able to write var someList = new ArrayList<>() maybe = new ArrayList<ClassName>() still.. I am guessing Java 11 :)",
                 nayden);
-        Comment activeMq = new Comment("The RabbitMQ message broker",
-                "The session will provide an overview of the Rabbit messaging broker along with a demonstration on " +
-                        "the various types of messaging patterns implemented in terms of the broker.",
+        Comment freePasses = new Comment("Free passes",
+                "A JUG lead has the chance to attend jPrime 2016 with a free pass",
                 martin);
-
-        Comment mvc10 = new Comment("JSR 371: MVC 1.0",
-                "Hi friends! We kick off the 2015/2016 activities with a workshop on MVC 1.0. It is a new spec, that" +
-                        " is coming in Java EE 8 and is being defined by JSR 371 so we will kick in the adopt a JSR " +
-                        "initiative as well.",
+        Comment top10 = new Comment("Top 10 mistakes",
+                "Java Beginner level but good to check : Top 10 Most Common Mistakes That Java Developers Make",
                 nayden);
 
-        mitya.getComments().add(nashorn);
-        vassil.getComments().add(scala);
-        nayden.getComments().add(springMvc);
-        martin.getComments().add(activeMq);
-        nayden.getComments().add(mvc10);
+        mitya.getComments().add(myfear);
+        misho.getComments().add(photo);
+        nayden.getComments().add(vars);
+        martin.getComments().add(freePasses);
+        nayden.getComments().add(top10);
 
         em.persist(mitya);
-        em.persist(vassil);
+        em.persist(misho);
         em.persist(nayden);
         em.persist(martin);
     }

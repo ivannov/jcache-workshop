@@ -24,19 +24,17 @@ public class User implements Serializable {
 	@Version
 	private int version;
 
-	@Column
     @NotNull
 	private String userName;
 
-	@Column
     @NotNull
 	private String password;
 
-	@Column
 	private String firstName;
 
-	@Column
 	private String lastName;
+
+	private boolean isAdmin;
 
 	@OneToMany(mappedBy = "byUser", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Comment> comments = new ArrayList<>();
@@ -45,10 +43,16 @@ public class User implements Serializable {
     }
 
     public User(String userName, String password, String firstName, String lastName) {
+        this(userName, password, firstName, lastName, false);
+    }
+
+    public User(String userName, String password, String firstName, String lastName,
+            boolean isAdmin) {
         this.userName = userName;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.isAdmin = isAdmin;
     }
 
     public Long getId() {
@@ -105,6 +109,14 @@ public class User implements Serializable {
 
     public void setComments(List<Comment> submissions) {
         this.comments = submissions;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 
     @Override

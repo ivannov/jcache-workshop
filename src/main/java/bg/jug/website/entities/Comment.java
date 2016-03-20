@@ -21,8 +21,7 @@ public class Comment implements Serializable {
 	@Version
 	private int version;
 
-	@Column
-    @Size(min = 8, max = 100)
+    @Size(max = 100)
 	private String title;
 
 	@Column(length = 3000)

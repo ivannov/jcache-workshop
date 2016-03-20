@@ -36,4 +36,12 @@ public class CommentsManager {
         em.persist(newSession);
         return newSession;
     }
+
+    @Transactional
+    public void deleteCommentWithId(Long commentId) {
+        final Comment comment = em.find(Comment.class, commentId);
+        if (comment != null) {
+            em.remove(comment);
+        }
+    }
 }
