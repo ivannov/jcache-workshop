@@ -37,9 +37,7 @@ public class CommentsController {
 
     @GET
     public String showAllComments() {
-        models.put("comments", commentsManager.getAllComments());
-        models.put("user", currentUser);
-        return "comments.jsp";
+        return prepareModelAndView(commentsManager.getAllComments());
     }
 
     @GET
@@ -56,10 +54,20 @@ public class CommentsController {
     @POST
     @Path("/search")
     public String filterComments(@FormParam("searchTerm") String searchTerm) {
-        List<Comment> allComments = commentsManager.getAllComments();
-        models.put("comments", allComments.stream().filter(comment -> comment.getTitle().contains(searchTerm) ||
-        comment.getContent().contains(searchTerm)).collect(Collectors.toList()));
+        return prepareModelAndView(commentsManager.getAllComments()
+                .stream()
+                .filter(comment -> commentSatisfiesTerm(comment, searchTerm))
+                .collect(Collectors.toList()));
+    }
+
+    private String prepareModelAndView(List<Comment> comments) {
+        models.put("comments", comments);
         models.put("user", currentUser);
         return "comments.jsp";
+    }
+
+    private boolean commentSatisfiesTerm(Comment comment, String searchTerm) {
+        return comment.getTitle().contains(searchTerm) ||
+                comment.getContent().contains(searchTerm);
     }
 }
