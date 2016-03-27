@@ -1,6 +1,7 @@
 package bg.jug.website.comment;
 
 import bg.jug.website.entities.User;
+import bg.jug.website.qualifiers.JPA;
 import bg.jug.website.users.LoggedIn;
 
 import javax.inject.Inject;
@@ -20,6 +21,7 @@ import java.net.URI;
 public class CommentsController {
 
     @Inject
+    @JPA
     private CommentsManager commentsManager;
 
     @Inject

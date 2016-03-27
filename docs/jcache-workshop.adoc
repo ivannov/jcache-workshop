@@ -105,8 +105,26 @@ Now we are safe to inject directly `EntityManager` in our beans, rather then goi
 
 The business logic is implemented in a few request scoped CDI beans.
 It is structured in a package per component way: there is a package for the comments and a package for the users.
-The `CommentsManager` is a request scoped CDI bean.
-It has three business methods: `getAllComments()`, `submitComment()` and `deleteCommentById()`.
+The `CommentsManager` is an interface holding our business logic.
+We have defined two implementations of this interface: one that uses directly JPA and the other one - using JCache.
+The application classes distinguish between the two using the qualifiers that are defined in the same package: `@JPA` and `@JCache` and are put on each one of them:
+
+[source,java]
+----
+@RequestScoped
+@JCache
+public class JCacheCommentsManager implements CommentsManager {
+  // implementation
+}
+
+@RequestScoped
+@JPA
+public class JCacheCommentsManager implements CommentsManager {
+  // implementation
+}
+----
+
+The interface has defined three business methods: `getAllComments()`, `submitComment()` and `deleteCommentById()`.
 As the latter two change the database, someone needs to start a transaction.
 Instead of bothering to do that by our own, we've used the `@Transactional` annotation coming from the JTA spec in Java EE 7
 
@@ -179,7 +197,7 @@ This tells MVC to look for that file in the WEB-INF/views folder of our applicat
 
 NOTE: There are plenty of other combinations of return values (and types), view locations and view technologies that you may use in your application. It's a good practice when you pick one, to stick to it in your whole app
 
-There's also a method that handsles POST requests (`login()`).
+There's also a method that handles POST requests (`login()`).
 It receives the userName and password entries from the login form, as parsed by the MVC application.
 Then it tries to look for a user via the `UserManager`.
 If it finds one, it stores it in the `UserContext` and redirects to the comments page.
@@ -225,10 +243,23 @@ This data is then available via the expression language in the JSP itself:
 </c:forEach>
 ----
 
-The other method here is the one that is used to delete comment with a certain ID. It first makes sure that the user that performed the request has admin role
+The other method here is the one that is used to delete comment with a certain ID.
+It first makes sure that the user that performed the request has admin role.
 
 The final controller (`NewCommentController`) is responsible for handling new comments in the guestbook.
 Its GET method returns the newComment.jsp form, while its POST method handles the submission itself.
+
+What is particularly interesting about these controllers is the way they obtain the `CommentsManager`.
+As we've mentioned already - there are two implementations of this interface.
+In order to avoid ambiguities upon deployment, we need to specify at injection point which of them we want to use.
+At the moment we are using the JPA implementation in both controllers, as the other one is not ready yet.
+
+[source,java]
+----
+@Inject
+@JPA
+private CommentsManager commentsManager;
+----
 
 ===== Miscellaneous
 

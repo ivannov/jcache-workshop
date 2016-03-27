@@ -1,39 +1,17 @@
 package bg.jug.website.comment;
 
 import bg.jug.website.entities.Comment;
-import bg.jug.website.entities.User;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.transaction.Transactional;
 import java.util.List;
 
 /**
  * @author Ivan St. Ivanov
  */
-@RequestScoped
-public class CommentsManager {
+interface CommentsManager {
 
-    @Inject
-    private EntityManager em;
+    List<Comment> getAllComments();
 
-    public List<Comment> getAllComments() {
-        return em.createNamedQuery("getAllComments", Comment.class).getResultList();
-    }
+    Comment submitComment(Comment newComment);
 
-    @Transactional
-    public Comment submitComment(Comment newComment) {
-        em.persist(newComment);
-        return newComment;
-    }
-
-    @Transactional
-    public void deleteCommentWithId(Long commentId) {
-        final Comment comment = em.find(Comment.class, commentId);
-        if (comment != null) {
-            em.remove(comment);
-        }
-    }
+    void deleteCommentWithId(Long commentId);
 }
