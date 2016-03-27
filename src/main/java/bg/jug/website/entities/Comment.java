@@ -7,8 +7,7 @@ import java.util.Objects;
 
 @Entity
 @NamedQueries({
-        @NamedQuery(name = "getAllSessions", query = "SELECT s FROM Comment s"),
-        @NamedQuery(name = "findSessionsByUser", query = "SELECT s FROM Comment s WHERE s.byUser = :user")
+        @NamedQuery(name = "getAllComments", query = "SELECT c FROM Comment c")
 })
 public class Comment implements Serializable {
 

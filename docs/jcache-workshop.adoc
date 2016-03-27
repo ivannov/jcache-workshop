@@ -1,4 +1,6 @@
 = Adopt-a-JSR workshop: JCache
+:source-highlighter: coderay
+:icons: font
 
 == Introduction (10 mins)
 
@@ -52,7 +54,226 @@ Download Eclipse, IntelliJ or NetBeans with JavaEE support:
 
 === Short description of the project
 
-The project that you are going to use for showcasing JCache is a very simple guestbook.
+==== Sample app
+
+The project that we are going to use for showcasing JCache is a very simple guestbook.
+All its features are available for logged in users only.
+So the first screen invites you to either log in or register.
+The guest book comes with four predefined users (nayden, misho, marto and mitya) with passwords matching their respective username.
+You can also add your own by clicking the Register button and filling out the registration form.
+Once logged in the user can see the list of all the comments entered in the guest book.
+A comment has title, content and author.
+The user can then add a comment of their own, by clicking the _Add comment_ button
+If the user has admin privileges (at the moment only nayden has), they can also delete comments by clicking on the _delete_ link to the right of each message.
+
+==== Implementation notes
+
+We've used a combination of Java EE 7 and some Java EE 8 technologies to implement the guestbook so far.
+
+===== Model layer
+
+The modeling and persistence layer is implemented with JPA.
+There are just two entities - User and Comment.
+They are connected with OneToMany be-directional relationship - one user can publish multiple comments and the comment keeps track which is the user that posted it.
+There are just a few named queries for each JPA entity:
+
+* We need to find a user by name and password upon login, that is why there is a special query for that
+* We need to get all the comments in our guestbook when we login
+
+The entity manager is initialized in a dedicated CDI producer - `EntityManagerProducer`.
+
+[source,java]
+----
+@ApplicationScoped
+public class EntityManagerProducer {
+
+    @PersistenceUnit
+    private EntityManagerFactory emf;
+
+    @RequestScoped
+    @Produces
+    public EntityManager getEntityManager() {
+        return emf.createEntityManager();
+    }
+}
+----
+
+Each time when we need an entity manager to be injected in our app, CDI will call the `getEntityManager()` method.
+Now we are safe to inject directly `EntityManager` in our beans, rather then going through getting the `EntityManagerFactory` first.
+
+===== Business logic
+
+The business logic is implemented in a few request scoped CDI beans.
+It is structured in a package per component way: there is a package for the comments and a package for the users.
+The `CommentsManager` is a request scoped CDI bean.
+It has three business methods: `getAllComments()`, `submitComment()` and `deleteCommentById()`.
+As the latter two change the database, someone needs to start a transaction.
+Instead of bothering to do that by our own, we've used the `@Transactional` annotation coming from the JTA spec in Java EE 7
+
+[source,java]
+----
+@Transactional
+public Comment submitComment(Comment newComment) {
+    em.persist(newComment);
+    return newComment;
+}
+
+@Transactional
+public void deleteCommentWithId(Long commentId) {
+    final Comment comment = em.find(Comment.class, commentId);
+    if (comment != null) {
+        em.remove(comment);
+    }
+}
+----
+
+The users package contains the business classes dealing with users.
+Again, there is a `UserManager` request scoped bean, that tries to find a user in the DB and also adds a new user.
+This corresponds to login and register features of our guestbook.
+One very special class is the `UserContext`.
+It is session scoped, which means that an instance of it will be created in the beginning of the browser session and will be destroyed once that session is invalidated.
+So it is a perfect means to use that for keeping session information, such as whether the user is logged in and if yes, which is that user.
+For that we use the `currentUser` field.
+The class that handles logging in (we'll come to it in a minute) has to make sure that it initializes it once a user is successfully logged in.
+Then the other classes, which require information about the currently logged in user, can siJSmply look that up from the user context.
+Which, remember, is one and the same instance throughout the whole user session.
+
+So, how does that logged in user lookup work?
+The naive way is to just inject the `UserContext` bean and call its `getCurrentUser()` method.
+Of course it will work, but there is even neater way - inject directly the user that is currently logged in, rather than calling the getter each time.
+It will again work with a CDI producer - make the `getCurrentUser()` produced that user:
+
+[source,java]
+----
+@Produces
+@LoggedIn
+public User getCurrentUser() {
+    return currentUser;
+}
+----
+
+You maybe noticed the special `@LoggedIn` qualifier.
+We've added that so that we can distinguish between all the different types of users that we might want to produce and inject in our application.
+So, for example, if we want to later inject the admin user for some new feature, then we can add a new qualifier (e.g. @Admin) and use that at the injection point.
+
+But let's get back to our current state of the guestbook.
+Now, if we need somewhere the current user, its injection is as simple as that:
+
+[source,java]
+----
+@Inject
+@LoggedIn
+private User currentUser;
+----
+
+===== The frontend
+
+We've chosen https://www.jcp.org/en/jsr/detail?id=371[MVC 1.0 (JSR 371)] to manage the connection between frontend and backend of our application.
+There's another workshop going through the new features of that, which you can check https://github.com/bgjug/mvc10-workshop/raw/master/docs/mvc-hol.pdf[here].
+
+There are a couple of controllers for each of our components.
+Let's start with the users.
+One of the controllers there manages login.
+When a GET request arrives at the _login_ URI, the showLoginForm is called and it returns the string `"login.jsp"`.
+This tells MVC to look for that file in the WEB-INF/views folder of our application.
+
+NOTE: There are plenty of other combinations of return values (and types), view locations and view technologies that you may use in your application. It's a good practice when you pick one, to stick to it in your whole app
+
+There's also a method that handsles POST requests (`login()`).
+It receives the userName and password entries from the login form, as parsed by the MVC application.
+Then it tries to look for a user via the `UserManager`.
+If it finds one, it stores it in the `UserContext` and redirects to the comments page.
+Otherwise, it simply redirects to the login page, which will finally end in a GET request to the same controller.
+
+There's nothing completely different in the other controller in the user package - `RegisterController`.
+Its GET method returns the register.jsp, which is then parsed on the server and rendered in the browser.
+The POST method is a bit different than the one in the `LoginController`.
+Its job is to get the data from the registration form, convert it to a user object and store that in the database.
+Also make sure that the entered data is valid and after that put the user in the UserContext.
+All the plumbing is done by the MVC framework.
+We only make sure to define the mapping in our `UserModel` class.
+There is also the validation check whether the entries in the _password_ and _reenterPassword_ fields match.
+
+The comments component contains two controllers as well.
+The first one is responsible for returning the comments view and populating its backing model with the comments that are currently available in the database and with the currently logged in user:
+
+[source,java]
+----
+@GET
+public String showAllComments() {
+    models.put("comments", commentsManager.getAllComments());
+    models.put("user", currentUser);
+    return "comments.jsp";
+}
+----
+
+This data is then available via the expression language in the JSP itself:
+[source,html]
+----
+<div class="logged-user">
+  Hello, <c:out value="${user.firstName}"/>
+</div>
+
+<c:forEach items="${comments}" var="comment">
+    <tr>
+        <td><c:out value="${comment.title}"/></td>
+        <td><c:out value="${comment.content}"/></td>
+        <td><c:out value="${comment.byUser.firstName}"/>
+            <c:out value="${comment.byUser.lastName}"/></td>
+        <c:if test="${user.admin}"><td><a href="comment/delete?commentId=${comment.id}">Delete</a></td></c:if>
+    </tr>
+</c:forEach>
+----
+
+The other method here is the one that is used to delete comment with a certain ID. It first makes sure that the user that performed the request has admin role
+
+The final controller (`NewCommentController`) is responsible for handling new comments in the guestbook.
+Its GET method returns the newComment.jsp form, while its POST method handles the submission itself.
+
+===== Miscellaneous
+
+There are some classes which functionality is not directly connected with any of the business components that we looked so far.
+
+The security package contains a servlet filter class.
+Its responsibility is to intercept incoming requests to the `comment` URI and check whether there is a user logged in.
+If not, the request is redirected to the login page.
+Otherwise the request is passed through.
+
+[source,java]
+----
+@Override
+public void doFilter(ServletRequest request, ServletResponse response,
+        FilterChain chain) throws IOException, ServletException {
+    if (userContext.getCurrentUser() != null) {
+        chain.doFilter(request, response);
+    } else {
+        ((HttpServletResponse)response).sendRedirect("login");
+    }
+}
+----
+
+The test package contains a class that inserts test data in the database when the application is started by the server.
+This is where the initial users and comments are created, so that you are able to login and see them right after the initial deployment.
+It is implemented with a singleton Enterprise Java Bean, that is created upon startup, rather than upon first use:
+
+[source,java]
+----
+@Singleton
+@Startup
+public class TestDataInserter {
+}
+----
+
+When the EJB container instantiates and initialized the above class, it will call the method annotated with `@PostConstruct`.
+That is why we put there the initialization of our test data:
+
+[source,java]
+----
+@PostConstruct
+public void insertTestData() {
+    // Test data initialization goes here
+}
+----
 
 === Enable JCache
 
@@ -105,4 +326,3 @@ How many times faster is the application with JCache ?
  - Using JCache with CDI: http://www.tomitribe.com/blog/2015/06/using-jcache-with-cdi/
  - High Performace Java EE with JCache and CDI: http://www.slideshare.net/Payara1/high-performance-java-ee-with-jcache-and-cdi
  - Using the JCache API with CDI on Payara server: http://blog.payara.fish/using-the-jcache-api-with-cdi-on-payara-server
-
