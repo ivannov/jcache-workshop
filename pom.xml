@@ -29,6 +29,12 @@
             <artifactId>ozark</artifactId>
             <version>1.0.0-m02</version>
         </dependency>
+        <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
     <build>
         <finalName>guestbook</finalName>

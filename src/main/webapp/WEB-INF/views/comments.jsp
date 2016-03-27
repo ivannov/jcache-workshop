@@ -10,6 +10,10 @@
 		<div class="logged-user">
 			Hello, <c:out value="${user.firstName}"/>
 		</div>
+		<form action="comment/search" method="post">
+			<input type="text"placeholder="Search" name="searchTerm">
+			<button type="submit">Go!</button>
+		</form>
 		<div class="app-title">
 		    <h1>Bulgarian JUG guestbook</h1>
 		</div>
