@@ -37,6 +37,12 @@ Download Eclipse, IntelliJ or NetBeans with JavaEE support:
  5. Verify that server is started by logging in the admin interface at http://localhost:4848/ (Payara uses a modified version of the Glassfish admin interface)
 	If the admin interface does not load the check the Payara logs at D:\software\payara-4.1.1.161.1\payara41\glassfish\domains\domain1\logs errors during initialization.
 
+6. Enable Hazelcast by running the following command:
+
+----
+D:\Software\payara-4.1.1.161.1\payara41\bin\asadmin set-hazelcast-configuration --enabled=true --dynamic=true
+----
+
 == Guide (60 mins)
 
 === Setup demo project: Guestbook
