@@ -2,7 +2,7 @@ package bg.jug.website.comment;
 
 import bg.jug.website.entities.Comment;
 import bg.jug.website.entities.User;
-import bg.jug.website.qualifiers.JPA;
+import bg.jug.website.qualifiers.JCache;
 import bg.jug.website.users.LoggedIn;
 
 import javax.inject.Inject;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class CommentsController {
 
     @Inject
-    @JPA
+    @JCache
     private CommentsManager commentsManager;
 
     @Inject
