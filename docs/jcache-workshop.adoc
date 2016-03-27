@@ -24,39 +24,48 @@ Download Eclipse, IntelliJ or NetBeans with JavaEE support:
 
 === Setup Payara server
 
- 1. Download Payara server full (latest version) from http://www.payara.fish/downloads
- 2. Extract the Payara server zip to a proper directory (e.g. D:\Software)
- 3. Run the Java DB RDBMS that comes with Payara by executing the D:\Software\payara-4.1.1.161.1\payara41\javadb\bin\startNetworkServer script.
-    Note that Java DB (also known as Apache Derby) is also shipped with Glassfish distributions.
-    By default the Java DB server accepts connections on port 1527.
- 4. Start Payara server using the asadmin script as follows: +
- 	----
- 	D:\Software\payara-4.1.1.161.1\payara41\bin\asadmin start-domain
- 	----
+1) Download Payara server full (latest version) from http://www.payara.fish/downloads
 
- 5. Verify that server is started by logging in the admin interface at http://localhost:4848/ (Payara uses a modified version of the Glassfish admin interface)
-	If the admin interface does not load the check the Payara logs at D:\software\payara-4.1.1.161.1\payara41\glassfish\domains\domain1\logs errors during initialization.
+2) Extract the Payara server zip to a proper directory (e.g. D:\Software on Windows or /opt on Linux).
+We'll call that directory `$(PAYARA_HOME)`
 
-6. Enable Hazelcast by running the following command:
+3) Run the Java DB RDBMS that comes with Payara by executing the `$(PAYARA_HOME)/javadb/bin/startNetworkServer` script.
+
+NOTE: Java DB (also known as Apache Derby) is also shipped with Glassfish distributions. By default the Java DB server accepts connections on port 1527.
+
+4) Start Payara server using the `asadmin` script from the `$(PAYARA_HOME)/bin` directory as follows:
 
 ----
-D:\Software\payara-4.1.1.161.1\payara41\bin\asadmin set-hazelcast-configuration --enabled=true --dynamic=true
+asadmin start-domain
+----
+
+5) Verify that server is started by logging in the admin interface at http://localhost:4848/ (Payara uses a modified version of the Glassfish admin interface)
+
+If the admin interface does not load the check the Payara logs at `$(PAYARA_HOME)/glassfish/domains/domain1/logs` errors during initialization.
+
+6) Enable Hazelcast by running the following command in the `$(PAYARA_HOME)/bin` directory:
+
+----
+asadmin set-hazelcast-configuration --enabled=true --dynamic=true
 ----
 
 == Guide (60 mins)
 
 === Setup demo project: Guestbook
 
- 1. Clone the Guestbook project to a proper location: +
-	----
-	git clone https://github.com/bgjug/jcache-workshop.git guestbook
-	----
+1) Clone the Guestbook project to a proper location:
 
- 2. Import the project as a Maven project in your IDE of choice (e.g. for Eclipse: File -> Import -> Existing Maven Projects)
- 3. Add Payara (Glassfish 4) deployment support for in our IDE. For Eclipse add a new server from the Servers view in Eclipse (Window -> Show View -> Servers) by right clicking in the view and selecting *Glassfish 4* from the *Glassfish* category.
- As a name specify *Payara*, as a location specify *D:/software/payara-4.1.1.161.1/payara41/glassfish* and as a Java Development Kit specify JDK 8 (must be installed on your system and added as a Runtime environment from Window -> Preferences in Eclipse).
- After you finish creating the server right click on it from the server view and select 'Add or Remove', select the 'guestbook' project for deployment and click *Finish*.
- 4. Verify that when the project is synchronized with the server you are able to launch it by navigating to the *Applications* tab in the Payara admin panel and clicking the 'Launch' action next to the deployed *guestbook* application.
+----
+git clone https://github.com/bgjug/jcache-workshop.git guestbook
+----
+
+2) Import the project as a Maven project in your IDE of choice (e.g. for Eclipse: File -> Import -> Existing Maven Projects)
+
+3) Add Payara (Glassfish 4) deployment support for in your IDE.
+
+TIP: For Eclipse add a new server from the Servers view in Eclipse (Window -> Show View -> Servers) by right clicking in the view and selecting *Glassfish 4* from the *Glassfish* category. As a name specify *Payara*, as a location specify *D:/software/payara-4.1.1.161.1/payara41/glassfish* and as a Java Development Kit specify JDK 8 (must be installed on your system and added as a Runtime environment from Window -> Preferences in Eclipse).  After you finish creating the server right click on it from the server view and select 'Add or Remove', select the 'guestbook' project for deployment and click *Finish*.
+
+4) Verify that when the project is synchronized with the server you are able to launch it by navigating to the *Applications* tab in the Payara admin panel and clicking the 'Launch' action next to the deployed *guestbook* application.
 
 === Short description of the project
 
