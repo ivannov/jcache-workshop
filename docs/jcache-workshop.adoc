@@ -50,6 +50,10 @@ Download Eclipse, IntelliJ or NetBeans with JavaEE support:
  After you finish creating the server right click on it from the server view and select 'Add or Remove', select the 'guestbook' project for deployment and click *Finish*.
  4. Verify that when the project is synchronized with the server you are able to launch it by navigating to the *Applications* tab in the Payara admin panel and clicking the 'Launch' action next to the deployed *guestbook* application.
 
+=== Short description of the project
+
+The project that you are going to use for showcasing JCache is a very simple guestbook.
+
 === Enable JCache
 
 - Cache::put
