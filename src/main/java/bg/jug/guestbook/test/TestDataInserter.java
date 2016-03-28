@@ -1,7 +1,7 @@
-package bg.jug.website.test;
+package bg.jug.guestbook.test;
 
-import bg.jug.website.entities.Comment;
-import bg.jug.website.entities.User;
+import bg.jug.guestbook.entities.Comment;
+import bg.jug.guestbook.entities.User;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;

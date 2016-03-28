@@ -1,6 +1,6 @@
-package bg.jug.website.comment;
+package bg.jug.guestbook.comment;
 
-import bg.jug.website.entities.Comment;
+import bg.jug.guestbook.entities.Comment;
 
 import java.util.List;
 

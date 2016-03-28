@@ -1,9 +1,9 @@
-package bg.jug.website.comment;
+package bg.jug.guestbook.comment;
 
-import bg.jug.website.entities.Comment;
-import bg.jug.website.entities.User;
-import bg.jug.website.qualifiers.JPA;
-import bg.jug.website.users.LoggedIn;
+import bg.jug.guestbook.entities.Comment;
+import bg.jug.guestbook.entities.User;
+import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.users.LoggedIn;
 
 import javax.inject.Inject;
 import javax.mvc.annotation.Controller;

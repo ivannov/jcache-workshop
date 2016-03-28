@@ -1,6 +1,6 @@
-package bg.jug.website.users;
+package bg.jug.guestbook.users;
 
-import bg.jug.website.entities.User;
+import bg.jug.guestbook.entities.User;
 
 import javax.inject.Inject;
 import javax.mvc.annotation.Controller;

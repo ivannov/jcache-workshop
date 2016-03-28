@@ -1,4 +1,4 @@
-package bg.jug.website.admin;
+package bg.jug.guestbook.admin;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;

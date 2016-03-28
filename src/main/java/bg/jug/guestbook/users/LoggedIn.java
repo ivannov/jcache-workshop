@@ -1,4 +1,4 @@
-package bg.jug.website.qualifiers;
+package bg.jug.guestbook.users;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
@@ -12,6 +12,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Qualifier
 @Retention(RUNTIME)
-@Target({TYPE, METHOD, FIELD, PARAMETER})
-public @interface JPA {
-}
+@Target({TYPE, METHOD, PARAMETER, FIELD})
+public @interface LoggedIn {}

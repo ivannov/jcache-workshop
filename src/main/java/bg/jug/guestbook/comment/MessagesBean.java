@@ -1,4 +1,4 @@
-package bg.jug.website.comment;
+package bg.jug.guestbook.comment;
 
 import javax.enterprise.inject.Model;
 

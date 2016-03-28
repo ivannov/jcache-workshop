@@ -1,15 +1,12 @@
-package bg.jug.website.users;
+package bg.jug.guestbook.users;
 
-import bg.jug.website.entities.User;
+import bg.jug.guestbook.entities.User;
 
-import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
-import java.util.List;
 
 /**
  * @author Ivan St. Ivanov`

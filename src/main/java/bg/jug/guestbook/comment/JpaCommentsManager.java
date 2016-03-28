@@ -1,13 +1,11 @@
-package bg.jug.website.comment;
+package bg.jug.guestbook.comment;
 
-import bg.jug.website.entities.Comment;
-import bg.jug.website.entities.User;
-import bg.jug.website.qualifiers.JPA;
+import bg.jug.guestbook.entities.Comment;
+import bg.jug.guestbook.qualifiers.JPA;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.List;
 

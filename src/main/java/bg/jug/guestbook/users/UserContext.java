@@ -1,7 +1,6 @@
-package bg.jug.website.users;
+package bg.jug.guestbook.users;
 
-import bg.jug.website.entities.User;
-import bg.jug.website.test.TestDataInserter;
+import bg.jug.guestbook.entities.User;
 
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
