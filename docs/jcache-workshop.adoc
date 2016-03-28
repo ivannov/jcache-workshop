@@ -37,6 +37,12 @@ Download Eclipse, IntelliJ or NetBeans with JavaEE support:
  5. Verify that server is started by logging in the admin interface at http://localhost:4848/ (Payara uses a modified version of the Glassfish admin interface)
 	If the admin interface does not load the check the Payara logs at D:\software\payara-4.1.1.161.1\payara41\glassfish\domains\domain1\logs errors during initialization.
 
+To verify Payara server is enabled you can again use the asadmin tool as follows:
+
+----
+asadmin list-hazelcast-members
+----
+
 == Guide (60 mins)
 
 === Setup demo project: Guestbook
@@ -61,7 +67,7 @@ All its features are available for logged in users only.
 So the first screen invites you to either log in or register.
 The guest book comes with four predefined users (nayden, misho, marto and mitya) with passwords matching their respective username.
 You can also add your own by clicking the Register button and filling out the registration form.
-Once logged in the user can see the list of all the comments entered in the guest book.
+Once logged in the user can see the list of all the comments entered in the guestbook.
 A comment has title, content and author.
 The user can then add a comment of their own, by clicking the _Add comment_ button
 If the user has admin privileges (at the moment only nayden has), they can also delete comments by clicking on the _delete_ link to the right of each message.
@@ -308,6 +314,12 @@ public void insertTestData() {
 
 === Enable JCache
 
+Features to demonstrate (basic Cache operations):
+
+ - Cache::put
+ - Cache::get
+ - Cache::remove
+
 First include the JCache API as part of your project's pom.xml as follows:
 
 [source,xml]
@@ -320,24 +332,120 @@ First include the JCache API as part of your project's pom.xml as follows:
    </dependency>
 ---- 
 
+Our first task is to enable JCache for our comments. Before doing that we need to be able to get a _javax.cache.Cache_ instance that will be used 
+in our JCacheCommentsManager implementation. То do so create the CommentsCacheProducer cache provider class as follows:
 
+[source,java]
+----
+@ApplicationScoped
+public class CommentsCacheProducer {
 
-- Cache::put
-- Cache::get
-- Cache::remove
+    private static final String COMMENTS_CACHE_NAME = "comments";
+
+    @Inject
+    private CacheManager cacheManager;
+
+    @Produces
+    @RequestScoped
+    public Cache<Long, Comment> getCommentsCache() {
+        Cache<Long, Comment> cache = cacheManager.getCache(COMMENTS_CACHE_NAME, Long.class, Comment.class);
+        if (cache == null) {
+            cache = cacheManager.createCache(COMMENTS_CACHE_NAME,
+                    new MutableConfiguration<Long, Comment>().setTypes(Long.class, Comment.class));
+        }
+        return cache;
+    }
+}
+---- 
+
+Inject the comments cache and the comments cache manager in the JCacheCommentsManager class as follows:
+
+[source,java]
+----
+@ApplicationScoped
+public class CommentsCacheProducer {
+
+    @Inject
+    @JPA
+    private CommentsManager passThroughCommentsManager;
+
+    @Inject
+    private Cache<Long, Comment> cache;
+---- 
+
+Now provide implementation of the CommentsManager interface using JCache as follows:
+
+[source,java]
+----
+
+     @Override
+     public List<Comment> getAllComments() {
+        return null;
+        Iterator<Cache.Entry<Long, Comment>> commentsCacheIterator = cache.iterator();
+        if (commentsCacheIterator.hasNext()) {
+            // Converting iterator to Stream is a bit ugly, so doing it the Java 7 way
+            List<Comment> foundComments = new ArrayList<>();
+            while (commentsCacheIterator.hasNext()) {
+                foundComments.add(commentsCacheIterator.next().getValue());
+            }
+            return foundComments;
+        }
+
+        List<Comment> dbComments = passThroughCommentsManager.getAllComments();
+        dbComments.forEach(comment -> cache.put(comment.getId(), comment));
+        return dbComments;
+     }
+	  
+     @Override
+     public Comment submitComment(Comment newComment) {
+        return null;
+        Comment submittedComment = passThroughCommentsManager.submitComment(newComment);
+        cache.put(submittedComment.getId(), submittedComment);
+        return submittedComment;
+     }
+ 
+     @Override
+     public void deleteCommentWithId(Long commentId) {
+        passThroughCommentsManager.deleteCommentWithId(commentId);
+        cache.remove(commentId);
+     }
+---- 
+
+Redeploy the application and chech that it is working with your new JCache provider.
 
 === Utilize additional JCache APIs
 
-- EntryProcessor
-- CacheEntryListeners
-- ExpiryPolicy
-- CacheWriter / CacheReader?/CacheLoader
+Features to demonstrate (supporting JCache APIs):
+
+ - setting Cache configuration (such as ExpiryPolicy for cache entry expiry timeout)
+ - using _CacheEntryListener_s to intercept Cache lifecycle events (creation, removal, update or retrieval of entries) 
+ - using _EntryProcessor_s to provide composite atomic operations over mutable representations of Cache entries
+ - using CacheWriter /  CacheLoader instances in order to establish cache integrations (for read-through/write-through) operations with other systems
+
+// TODO
 
 === Refactor project to use CDI
+
+Features to demonstrate (JCache API annotations):
+
+ - annotations provided by the JCache API for use with DI frameworks such as CDI, Spring or Guice
+
+We already started using CDI in order to create a producer for our comments Cache instance and inject it wherever needed. However the JCache API provides further a set of annotations that can be utilized by DI frameworks in order to provide direct caching support. These annotations include:
+
+ - @CacheDefaults - specifies configuration (such as the default cache name) for caching annotations at the method level
+ - @CacheResult - marks methods whose return value is cached
+ - @CachePut - marks methods where one of their parameters is stored in the cache
+ - @CacheRemove - marks methods whose invocations results in a cache entry removal
+ - @CacheRemoveAll - marks methods whose invocations results in all cache entry being removed
+ - @CacheKey - marks a method parameter as a cache key (typically used by a CacheKeyGenerator)
+ - @CacheValue - marks a method parameter as a cache value (typically for methods annotated with @CachePut)
+
+// TODO
 
 === Summary
 
 How many times faster is the application with JCache ?
+How can you manage your JCache caches and gather statistics on the various cache operations ? 
 
 == References
 
@@ -347,10 +455,11 @@ How many times faster is the application with JCache ?
  - Introduction to JCache JSR 107: https://dzone.com/articles/introduction-jcache-jsr-107
  - Sneak peek into the JCache API: https://www.javacodegeeks.com/2015/02/sneak-peek-jcache-api-jsr-107.html
  - JCache, why and how ?: https://vaadin.com/blog/-/blogs/jcache-why-and-how-
- - JCache is Final! I Repeat: JCache is Final!
- - Java Caching: Strategies and the JCache API
+ - JCache is Final! I Repeat: JCache is Final!: https://blogs.oracle.com/theaquarium/entry/jcache_is_final_i_repeat
+ - Java Caching: Strategies and the JCache API: https://www.linkedin.com/pulse/java-caching-strategies-jcache-api-somenath-panda
  - How to speed up your application using JCache: https://www.jfokus.se/jfokus16/preso/How-to-Speed-Up-Your-Application-using-JCache.pdf
  - After 13 years, JCache specification is finally complete: http://sdtimes.com/13-years-jcache-specification-finally-complete/ +
+
 [bibliography]
 .JCache support
  - Hazelcast blogs (JCache category): http://blog.hazelcast.com/category/jcache/
@@ -366,6 +475,7 @@ How many times faster is the application with JCache ?
  - Couchbase JCache implementation: https://github.com/couchbaselabs/couchbase-java-cache
  - JCache (Payara 4.1.153): https://github.com/payara/Payara/wiki/JCache-(Payara-4.1.153) +
  - Spring JCache annotations support: https://spring.io/blog/2014/04/14/cache-abstraction-jcache-jsr-107-annotations-support
+
 [bibliography]
 .JCache & CDI
  - Using JCache with CDI: http://www.tomitribe.com/blog/2015/06/using-jcache-with-cdi/
