@@ -1,6 +1,6 @@
-package bg.jug.website.security;
+package bg.jug.guestbook.security;
 
-import bg.jug.website.users.UserContext;
+import bg.jug.guestbook.users.UserContext;
 
 import javax.inject.Inject;
 import javax.servlet.Filter;

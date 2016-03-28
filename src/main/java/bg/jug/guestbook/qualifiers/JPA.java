@@ -1,4 +1,4 @@
-package bg.jug.website.qualifiers;
+package bg.jug.guestbook.qualifiers;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
@@ -13,5 +13,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Qualifier
 @Retention(RUNTIME)
 @Target({TYPE, METHOD, FIELD, PARAMETER})
-public @interface JCache {
+public @interface JPA {
 }

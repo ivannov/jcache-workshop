@@ -1,4 +1,4 @@
-package bg.jug.website.admin;
+package bg.jug.guestbook.admin;
 
 import javax.mvc.annotation.Controller;
 import javax.ws.rs.GET;

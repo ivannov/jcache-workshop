@@ -1,7 +1,7 @@
-package bg.jug.website.comment;
+package bg.jug.guestbook.comment;
 
-import bg.jug.website.entities.Comment;
-import bg.jug.website.qualifiers.JCache;
+import bg.jug.guestbook.entities.Comment;
+import bg.jug.guestbook.qualifiers.JCache;
 
 import javax.enterprise.context.RequestScoped;
 import java.util.List;

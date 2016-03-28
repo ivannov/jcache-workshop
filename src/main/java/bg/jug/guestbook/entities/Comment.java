@@ -1,4 +1,4 @@
-package bg.jug.website.entities;
+package bg.jug.guestbook.entities;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;

@@ -1,4 +1,4 @@
-package bg.jug.website.admin;
+package bg.jug.guestbook.admin;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;

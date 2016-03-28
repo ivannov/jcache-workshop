@@ -1,4 +1,4 @@
-package bg.jug.website.users;
+package bg.jug.guestbook.users;
 
 import javax.enterprise.inject.Model;
 import javax.validation.constraints.AssertTrue;
