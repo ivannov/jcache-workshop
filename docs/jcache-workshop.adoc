@@ -308,6 +308,20 @@ public void insertTestData() {
 
 === Enable JCache
 
+First include the JCache API as part of your project's pom.xml as follows:
+
+[source,xml]
+----
+    <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-api</artifactId>
+         <version>1.0.0</version>
+         <scope>provided</scope>
+   </dependency>
+---- 
+
+
+
 - Cache::put
 - Cache::get
 - Cache::remove
