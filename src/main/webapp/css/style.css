@@ -99,3 +99,8 @@ input:focus {
 .logged-user {
 	text-align: right;
 }
+
+#search-btn {
+	margin: 0 0 0 0 !important;
+	display: inline-block;
+}
