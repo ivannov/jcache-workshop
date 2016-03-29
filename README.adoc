@@ -1,1 +1,3 @@
-TODO - create readme
+= Adopt-a-JSR workshop: JCache
+
+link:docs/jcache-workshop.adoc[Follow the guide]
