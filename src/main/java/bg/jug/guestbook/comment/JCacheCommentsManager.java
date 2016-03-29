@@ -52,6 +52,7 @@ public class JCacheCommentsManager implements CommentsManager {
 		dbComments.forEach(comment -> {
 			try {
 				cache.put(comment.getId(), new PayaraValueHolder(comment));
+				cache.invoke(comment.getId(), new CommentAuthorEntryProcessor());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -67,6 +68,7 @@ public class JCacheCommentsManager implements CommentsManager {
 				.submitComment(newComment);
 		cache.put(submittedComment.getId(), new PayaraValueHolder(
 				submittedComment));
+		cache.invoke(submittedComment.getId(), new CommentAuthorEntryProcessor());
 		return submittedComment;
 	}
 

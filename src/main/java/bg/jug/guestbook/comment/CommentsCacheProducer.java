@@ -9,10 +9,16 @@ import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.AccessedExpiryPolicy;
 import javax.cache.expiry.Duration;
+import javax.cache.spi.CachingProvider;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+
+import com.hazelcast.cache.impl.HazelcastServerCachingProvider;
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 
 import fish.payara.cdi.jsr107.impl.PayaraValueHolder;
 
@@ -24,13 +30,21 @@ public class CommentsCacheProducer {
 
 	private static final String COMMENTS_CACHE_NAME = "comments";
 
-	@Inject
 	private CacheManager cacheManager;
-
+	
+	{
+		ClassLoader appClassLoader = getClass().getClassLoader();
+		Config config = new Config();
+		config.setClassLoader(appClassLoader);
+		HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+		CachingProvider cp = HazelcastServerCachingProvider.createCachingProvider(instance);
+		cacheManager = cp.getCacheManager(cp.getDefaultURI(), appClassLoader);
+	}
+	
 	@Produces
 	@RequestScoped
 	public Cache<Long, PayaraValueHolder> getCommentsCache() {
-
+		
 		Cache<Long, PayaraValueHolder> cache = cacheManager.getCache(COMMENTS_CACHE_NAME,
 				Long.class, PayaraValueHolder.class);
 		if (cache == null) {
