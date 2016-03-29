@@ -29,8 +29,9 @@
 	            <tr class="${loop.index % 2 == 0 ? 'even' : 'odd'}">
 	                <td><c:out value="${comment.title}"/></td>
 	                <td><c:out value="${comment.content}"/></td>
-	                <td><c:out value="${comment.byUser.firstName}"/>
-	                    <c:out value="${comment.byUser.lastName}"/></td>
+	                <td><a href="user?userName=${comment.byUser.userName}">
+						<c:out value="${comment.byUser.firstName}"/>
+	                    <c:out value="${comment.byUser.lastName}"/></a></td>
 	                <c:if test="${user.admin}"><td><a href="comment/delete?commentId=${comment.id}">Delete</a></td></c:if>
 	            </tr>
 	        </c:forEach>

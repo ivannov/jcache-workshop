@@ -1,6 +1,7 @@
 package bg.jug.guestbook.users;
 
 import bg.jug.guestbook.entities.User;
+import bg.jug.guestbook.qualifiers.JPA;
 
 import javax.inject.Inject;
 import javax.mvc.annotation.Controller;
@@ -20,6 +21,7 @@ public class RegisterController {
     }
 
     @Inject
+    @JPA
     private UserManager userManager;
 
     @Inject
