@@ -10,7 +10,8 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @NamedQueries({
-		@NamedQuery(name = "findUserByNameAndPassword", query = "SELECT u FROM User u WHERE u.userName = :userName AND u.password = :password")
+		@NamedQuery(name = "findUserByNameAndPassword", query = "SELECT u FROM User u WHERE u.userName = :userName AND u.password = :password"),
+		@NamedQuery(name = "findUserByName", query = "SELECT u FROM User u WHERE u.userName = :userName")
 })
 @Table(name = "Users")
 public class User implements Serializable {
