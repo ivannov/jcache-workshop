@@ -7,24 +7,27 @@ import java.util.List;
 
 import javax.cache.Cache;
 import javax.cache.configuration.CompleteConfiguration;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import bg.jug.guestbook.entities.Comment;
-import bg.jug.guestbook.qualifiers.JCache;
-import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.cache.JCache;
+import bg.jug.guestbook.cache.JPA;
 import fish.payara.cdi.jsr107.impl.PayaraValueHolder;
 
 /**
  * @author Ivan St. Ivanov
  */
-@RequestScoped
+@ApplicationScoped
 @JCache
 public class JCacheCommentsManager implements CommentsManager {
 
 	@Inject
 	@JPA
 	private CommentsManager passThroughCommentsManager;
+
+    @Inject
+	private CommentAuthorEntryProcessor processor;
 
 	@Inject
 	private Cache<Long, PayaraValueHolder> cache;
@@ -52,7 +55,7 @@ public class JCacheCommentsManager implements CommentsManager {
 		dbComments.forEach(comment -> {
 			try {
 				cache.put(comment.getId(), new PayaraValueHolder(comment));
-				cache.invoke(comment.getId(), new CommentAuthorEntryProcessor());
+				cache.invoke(comment.getId(), processor);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -68,7 +71,7 @@ public class JCacheCommentsManager implements CommentsManager {
 				.submitComment(newComment);
 		cache.put(submittedComment.getId(), new PayaraValueHolder(
 				submittedComment));
-		cache.invoke(submittedComment.getId(), new CommentAuthorEntryProcessor());
+		cache.invoke(submittedComment.getId(), processor);
 		return submittedComment;
 	}
 

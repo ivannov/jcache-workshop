@@ -1,19 +1,18 @@
 package bg.jug.guestbook.comment;
 
-import java.io.IOException;
-import java.io.Serializable;
+import bg.jug.guestbook.entities.Comment;
+import fish.payara.cdi.jsr107.impl.PayaraValueHolder;
 
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
+import java.io.IOException;
 
-import bg.jug.guestbook.entities.Comment;
-import fish.payara.cdi.jsr107.impl.PayaraValueHolder;
-
+@ApplicationScoped
 public class CommentAuthorEntryProcessor implements
-		EntryProcessor<Long, PayaraValueHolder, Comment>, Serializable {
-
-	private static final long serialVersionUID = 5257349479693469233L;
+		EntryProcessor<Long, PayaraValueHolder, Comment> {
 
 	@Override
 	public Comment process(MutableEntry<Long, PayaraValueHolder> entry,
@@ -25,12 +24,10 @@ public class CommentAuthorEntryProcessor implements
 					+ comment.getByUser().getUserName() + "]");
 			entry.setValue(new PayaraValueHolder(comment));
 			return comment;
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
-		return null;
+        return null;
 	}
 
 }

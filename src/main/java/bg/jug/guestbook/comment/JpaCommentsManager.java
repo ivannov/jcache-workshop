@@ -1,9 +1,9 @@
 package bg.jug.guestbook.comment;
 
 import bg.jug.guestbook.entities.Comment;
-import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.cache.JPA;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Ivan St. Ivanov
  */
-@RequestScoped
+@ApplicationScoped
 @JPA
 public class JpaCommentsManager implements CommentsManager {
 

@@ -1,4 +1,4 @@
-package bg.jug.guestbook.qualifiers;
+package bg.jug.guestbook.cache;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
@@ -13,5 +13,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Qualifier
 @Retention(RUNTIME)
 @Target({TYPE, METHOD, FIELD, PARAMETER})
-public @interface JCache {
+public @interface Hazelcast {
 }

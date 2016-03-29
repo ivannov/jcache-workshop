@@ -1,6 +1,6 @@
 package bg.jug.guestbook.users;
 
-import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.cache.JCache;
 
 import javax.inject.Inject;
 import javax.mvc.Models;
@@ -17,7 +17,7 @@ import javax.ws.rs.QueryParam;
 public class UserController {
 
     @Inject
-    @JPA
+    @JCache
     private UserManager userManager;
 
     @Inject

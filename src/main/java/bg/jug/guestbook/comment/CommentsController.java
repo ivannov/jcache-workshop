@@ -2,7 +2,7 @@ package bg.jug.guestbook.comment;
 
 import bg.jug.guestbook.entities.Comment;
 import bg.jug.guestbook.entities.User;
-import bg.jug.guestbook.qualifiers.JCache;
+import bg.jug.guestbook.cache.JCache;
 import bg.jug.guestbook.users.LoggedIn;
 
 import javax.inject.Inject;
