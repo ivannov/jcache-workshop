@@ -618,7 +618,58 @@ To check if the listener is working properly add a new comment and observe the a
 
 ==== EntryProcessor
 
-// TODO
+Next we will create an entry processor that appends the author of the comment in the comment contents before placing it into the cache. As you remember - due to a bug in the way value classes are deserialized we cannot access directly the (`Comment`) instance from the (`PayaraValueHolder`) instance holding it. 
+For that reason we would change our (`CommentsCacheProvider`) implementation a bit by removing the (`@Inject`) annotation from the cache manager instance and initializing it using the following init block:
+
+[source,java]
+----
+	{
+		ClassLoader appClassLoader = getClass().getClassLoader();
+		Config config = new Config();
+		config.setClassLoader(appClassLoader);
+		HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+		CachingProvider cp = HazelcastServerCachingProvider.createCachingProvider(instance);
+		cacheManager = cp.getCacheManager(cp.getDefaultURI(), appClassLoader);
+	}
+----
+
+[source,java]
+----
+Create the (`CommentAuthorEntryProcessor`) entry processor in the (`bg.jug.guestbook.comment`) package as follows:
+
+public class CommentAuthorEntryProcessor implements
+		EntryProcessor<Long, PayaraValueHolder, Comment>, Serializable {
+
+	private static final long serialVersionUID = 5257349479693469233L;
+
+	@Override
+	public Comment process(MutableEntry<Long, PayaraValueHolder> entry,
+			Object... arguments) throws EntryProcessorException {
+
+		try {
+			Comment comment = (Comment) entry.getValue().getValue();
+			comment.setContent(comment.getContent() + " ["
+					+ comment.getByUser().getUserName() + "]");
+			entry.setValue(new PayaraValueHolder(comment));
+			return comment;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+}
+----
+
+At the following to the (`JCacheCommentsManager`) methods for retriving all comments and adding a new comment right after a cache entry is created and placed in the cache: 
+
+[source,java]
+----
+	cache.invoke(comment.getId(), new CommentAuthorEntryProcessor());
+----
+
+Redeploy the application and check that once you log-in or add a comment the author is appended at the end of the comment.
 
 ==== CacheWriter/CacheLoader
 
