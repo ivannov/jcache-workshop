@@ -10,6 +10,8 @@ import javax.mvc.Models;
 import javax.mvc.annotation.Controller;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,7 +38,7 @@ public class CommentsController {
     private Models models;
 
     @GET
-    public String showAllComments() {
+    public String showAllComments() throws ClassNotFoundException, IOException {
         return prepareModelAndView(commentsManager.getAllComments());
     }
 
@@ -53,7 +55,7 @@ public class CommentsController {
 
     @POST
     @Path("/search")
-    public String filterComments(@FormParam("searchTerm") String searchTerm) {
+    public String filterComments(@FormParam("searchTerm") String searchTerm) throws ClassNotFoundException, IOException {
         return prepareModelAndView(commentsManager.getAllComments()
                 .stream()
                 .filter(comment -> commentSatisfiesTerm(comment, searchTerm))
@@ -63,6 +65,8 @@ public class CommentsController {
     private String prepareModelAndView(List<Comment> comments) {
         models.put("comments", comments);
         models.put("user", currentUser);
+        models.put("statistics", commentsManager.getStatistics());
+        
         return "comments.jsp";
     }
 

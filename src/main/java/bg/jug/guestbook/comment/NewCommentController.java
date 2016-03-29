@@ -2,7 +2,7 @@ package bg.jug.guestbook.comment;
 
 import bg.jug.guestbook.entities.Comment;
 import bg.jug.guestbook.entities.User;
-import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.qualifiers.JCache;
 import bg.jug.guestbook.users.LoggedIn;
 
 import javax.inject.Inject;
@@ -17,6 +17,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+
+import java.io.IOException;
 import java.net.URI;
 import java.util.stream.Collectors;
 
@@ -34,7 +36,7 @@ public class NewCommentController {
     private MessagesBean messagesBean;
 
     @Inject
-    @JPA
+    @JCache
     private CommentsManager commentsManager;
 
     @Inject
@@ -48,7 +50,7 @@ public class NewCommentController {
 
     @POST
     @ValidateOnExecution(type = ExecutableType.NONE)
-    public Response submitComment(@Valid @BeanParam CommentModel comment) {
+    public Response submitComment(@Valid @BeanParam CommentModel comment) throws IOException {
         if (br.isFailed()) {
             String errorMessage = br.getAllViolations().stream()
                     .map(ConstraintViolation::getMessage)
