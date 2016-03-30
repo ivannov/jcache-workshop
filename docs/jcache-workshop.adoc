@@ -708,7 +708,7 @@ We already started using CDI in order to create a producer for our comments Cach
  - @CacheKey - marks a method parameter as a cache key (typically used by a CacheKeyGenerator)
  - @CacheValue - marks a method parameter as a cache value (typically for methods annotated with @CachePut)
 
-// TODO
+Refactor the `submitComment` and `deleteCommentWithId` methods from the `JCacheCommentsManager` class to use the `@CachePut` and `@CacheRemove` annotations instead for interacting with the cache.
 
 === Summary
 
