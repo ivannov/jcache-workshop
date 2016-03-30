@@ -3,6 +3,7 @@ package bg.jug.guestbook.users;
 import bg.jug.guestbook.entities.User;
 import bg.jug.guestbook.cache.JPA;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;

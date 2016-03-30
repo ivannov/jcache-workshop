@@ -23,15 +23,21 @@ public class UserCacheProducer {
     @Hazelcast
     private CacheManager cacheManager;
 
+    @Inject
+    private UserCacheLoaderFactory loaderFactory;
+
+    @Inject
+    private UserCacheWriterFactory writerFactory;
+
     @Produces
     @RequestScoped
     public Cache<String, PayaraValueHolder> getUsersCache() {
-        Cache<String, PayaraValueHolder> cache = cacheManager.getCache(USERS_CACHE_NAME, String.class, PayaraValueHolder.class);
-        if (cache == null) {
-            MutableConfiguration<String, PayaraValueHolder> cacheConfig = new MutableConfiguration<>();
-            cacheConfig.setTypes(String.class, PayaraValueHolder.class);
-            cache = cacheManager.createCache(USERS_CACHE_NAME, cacheConfig);
-        }
-        return cache;
+        MutableConfiguration<String, PayaraValueHolder> cacheConfig = new MutableConfiguration<>();
+        cacheConfig.setTypes(String.class, PayaraValueHolder.class)
+                   .setReadThrough(true)
+                   .setCacheLoaderFactory(loaderFactory)
+                   .setWriteThrough(true)
+                   .setCacheWriterFactory(writerFactory);
+        return cacheManager.createCache(USERS_CACHE_NAME, cacheConfig);
     }
 }

@@ -1,11 +1,11 @@
 package bg.jug.guestbook.users;
 
-import bg.jug.guestbook.entities.User;
 import bg.jug.guestbook.cache.JCache;
-import bg.jug.guestbook.cache.JPA;
+import bg.jug.guestbook.entities.User;
 import fish.payara.cdi.jsr107.impl.PayaraValueHolder;
 
 import javax.cache.Cache;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -19,10 +19,6 @@ public class JCacheUserManager implements UserManager {
 
     @Inject
     private Cache<String, PayaraValueHolder> userCache;
-
-    @Inject
-    @JPA
-    private UserManager passThroughManager;
 
     @Override
     public User getUser(String userName, String password) {
@@ -41,20 +37,11 @@ public class JCacheUserManager implements UserManager {
             }
         }
 
-        User dbUser = passThroughManager.getUser(userName, password);
-        if (dbUser != null) {
-            try {
-                userCache.put(userName, new PayaraValueHolder(dbUser));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return dbUser;
+        return null;
     }
 
     @Override
     public void addUser(User newUser) {
-        passThroughManager.addUser(newUser);
         try {
             userCache.putIfAbsent(newUser.getUserName(), new PayaraValueHolder(newUser));
         } catch (IOException e) {
@@ -65,23 +52,11 @@ public class JCacheUserManager implements UserManager {
     @Override
     public User findUserByName(String userName) {
         PayaraValueHolder payaraValueHolder = userCache.get(userName);
-        User user = null;
-        if (payaraValueHolder == null) {
-            user = passThroughManager.findUserByName(userName);
-            if (user != null) {
-                try {
-                    userCache.put(userName, new PayaraValueHolder(user));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            try {
-                user = (User) payaraValueHolder.getValue();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+        try {
+            return (User) payaraValueHolder.getValue();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
         }
-        return user;
     }
 }
