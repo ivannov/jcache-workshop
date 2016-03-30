@@ -10,6 +10,10 @@
 		<div class="logged-user">
 			Hello, <c:out value="${user.firstName}"/>
 		</div>
+		<form action="comment/search" method="post">
+			<input type="text"placeholder="Search" name="searchTerm">
+			<button id="search-btn" class="btn" type="submit">Go!</button>
+		</form>
 		<div class="app-title">
 		    <h1>Bulgarian JUG guestbook</h1>
 		</div>
@@ -34,6 +38,7 @@
 	    </table>
 	    <br />
 		<a href="newcomment">Add comment</a>
+		<br /><br /><br /><span>Expiry policy is : ${statistics.getExpiryPolicyFactory() != null ? 'set' : 'not set'}</span>
 	</div>
 </body>
 </html>

@@ -1,8 +1,10 @@
 package bg.jug.guestbook.users;
 
 import bg.jug.guestbook.entities.User;
-import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.cache.JPA;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -13,6 +15,7 @@ import javax.transaction.Transactional;
  * @author Ivan St. Ivanov`
  */
 @JPA
+@RequestScoped
 public class JPAUserManager implements UserManager {
 
     @Inject

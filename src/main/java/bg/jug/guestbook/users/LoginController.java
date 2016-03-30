@@ -1,7 +1,7 @@
 package bg.jug.guestbook.users;
 
 import bg.jug.guestbook.entities.User;
-import bg.jug.guestbook.qualifiers.JPA;
+import bg.jug.guestbook.cache.JCache;
 
 import javax.inject.Inject;
 import javax.mvc.annotation.Controller;
@@ -21,7 +21,7 @@ public class LoginController {
     private UserContext userContext;
 
     @Inject
-    @JPA
+    @JCache
     private UserManager userManager;
 
     @GET
