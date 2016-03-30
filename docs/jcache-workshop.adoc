@@ -58,7 +58,7 @@ To verify Payara server is enabled you can again use the asadmin tool as follows
 asadmin list-hazelcast-members
 ----
 
-== Guide (60 mins)
+== Demo project (10 mins)
 
 === Setup demo project: Guestbook
 
@@ -323,13 +323,22 @@ public void insertTestData() {
 }
 ----
 
-=== Enable JCache
+== Tasks (50 mins)
 
-Features to demonstrate (basic Cache operations):
+=== Task 1: enable basic caching for the business components
 
- - `Cache::put`
- - `Cache::get`
- - `Cache::remove`
+*Hints*
+
+* Implement `JCacheCommentsManager` and `JCacheUserManager`
+* Use the `JPACommentsManager` and `JPACommentsManager` inside the JCache impementation to pass through the data to and from the database, when it's not there
+* Change the stereotype in the controllers so that they use the JCache implementation
+* You may consider creating a CDI producer that injects the `CacheManager` and creates the cache
+
+*Features to demonstrate (basic Cache operations)*
+
+* `Cache::put`
+* `Cache::get`
+* `Cache::remove`
 
 First include the JCache API as part of your project's pom.xml as follows:
 
@@ -369,12 +378,12 @@ public class CommentsCacheProducer {
 }
 ----
 
-Inject the comments cache and the comments cache manager in the `JCacheCommentsManager` class as follows:
+Inject the comments cache and the JPA comments manager in the `JCacheCommentsManager` class as follows:
 
 [source,java]
 ----
 @ApplicationScoped
-public class CommentsCacheProducer {
+public class JCacheCommentsManager {
 
     @Inject
     @JPA
@@ -384,14 +393,13 @@ public class CommentsCacheProducer {
     private Cache<Long, Comment> cache;
 ----
 
-Now provide implementation of the `CommentsManager` interface using JCache as follows:
+Now implementat the methods of the `CommentsManager` interface using JCache as follows:
 
 [source,java]
 ----
 
      @Override
      public List<Comment> getAllComments() {
-        return null;
         Iterator<Cache.Entry<Long, Comment>> commentsCacheIterator = cache.iterator();
         if (commentsCacheIterator.hasNext()) {
             // Converting iterator to Stream is a bit ugly, so doing it the Java 7 way
@@ -409,7 +417,6 @@ Now provide implementation of the `CommentsManager` interface using JCache as fo
 
      @Override
      public Comment submitComment(Comment newComment) {
-        return null;
         Comment submittedComment = passThroughCommentsManager.submitComment(newComment);
         cache.put(submittedComment.getId(), submittedComment);
         return submittedComment;
@@ -513,10 +520,10 @@ Re-deploy the application and check that it is working with your new JCache prov
 
 Features to demonstrate (supporting JCache APIs):
 
- - setting `Cache` configuration (such as `ExpiryPolicy` for cache entry expiry timeout)
- - using `CacheEntryListeners` to intercept  `Cache` lifecycle events (creation, removal, update or retrieval of entries)
- - using `Entry` to provide composite atomic operations over mutable representations of `Cache` entries
- - using `CacheWriter` /  `CacheLoader` instances in order to establish cache integrations (for read-through/write-through) operations with other systems
+* setting `Cache` configuration (such as `ExpiryPolicy` for cache entry expiry timeout)
+* using `CacheEntryListeners` to intercept  `Cache` lifecycle events (creation, removal, update or retrieval of entries)
+* using `Entry` to provide composite atomic operations over mutable representations of `Cache` entries
+* using `CacheWriter` /  `CacheLoader` instances in order to establish cache integrations (for read-through/write-through) operations with other systems
 
 ==== ExpiryPolicy
 
@@ -544,7 +551,7 @@ To supply an expiry policy for the comments cache refactor the `getCommentsCache
 
 As you can see an expiry policy factory is used to specify the expiry policy. In that case we specify an expiry of three minutes for the cache entries upon creation.
 
-_Note that at this point you may add additional code to your comments JSP page in order to observe the currently set expiry policy for a cache. The JCache API itself provides limited
+Note that at this point you may add additional code to your comments JSP page in order to observe the currently set expiry policy for a cache. The JCache API itself provides limited
 capabilities to inspect the current expiry policy - we can have to store configuration for further statistics. We can, however, check that an access policy is in effect by retrieving a Cache configuration instance._
 
 In order to check that an expiry policy is set we can do the following:
