@@ -331,12 +331,13 @@ public void insertTestData() {
 *Hints*
 
 * Implement `JCacheCommentsManager` and `JCacheUserManager`
-* Use the `JPACommentsManager` and `JPACommentsManager` inside the JCache impementation to pass through the data to and from the database, when it's not there
-* Change the stereotype in the controllers so that they use the JCache implementation
-* You may consider creating a CDI producer that injects the `CacheManager` and creates the cache
+* Use the `JPACommentsManager` and `JPACommentsManager` inside the JCache impementation to pass through the data to and from the database, when it's not in the cache
+* Change the qualifier in the controllers so that they use the JCache implementation instead of the JPA one
+* You may consider creating a CDI producer that itself injects the `CacheManager` and creates the actual cache in a `@Produces` method
 
 *Features to demonstrate (basic Cache operations)*
 
+* `CacheManager::createCache`
 * `Cache::put`
 * `Cache::get`
 * `Cache::remove`
@@ -353,8 +354,12 @@ First include the JCache API as part of your project's pom.xml as follows:
    </dependency>
 ----
 
-Our first task is to enable JCache for our comments. Before doing that we need to be able to get a `javax.cache.Cache` instance that will be used
-in our `JCacheCommentsManager` implementation. To do so create the `CommentsCacheProducer` cache provider class as follows:
+Our first task is to enable JCache for our comments.
+The key of the cache is the comment ID in our database (of type `Long`) and the value is the comment itself (of type `Comment`)
+You can create the cache in your JCache managers implementations.
+But as we are running in a Java EE application server (involving a CDI container), we'll do that in a separate class, which will act as a producer.
+We'll create a `javax.cache.Cache` instance there and we will inject it in our `JCacheCommentsManager` implementation.
+To do so create the `CommentsCacheProducer` cache provider class in the `bg.jug.guestbook.comment` package as follows:
 
 [source,java]
 ----
@@ -367,19 +372,24 @@ public class CommentsCacheProducer {
     private CacheManager cacheManager;
 
     @Produces
-    @RequestScoped
+    @ApplicationScoped
     public Cache<Long, Comment> getCommentsCache() {
         Cache<Long, Comment> cache = cacheManager.getCache(COMMENTS_CACHE_NAME, Long.class, Comment.class);
         if (cache == null) {
-            cache = cacheManager.createCache(COMMENTS_CACHE_NAME,
-                    new MutableConfiguration<Long, Comment>().setTypes(Long.class, Comment.class));
+          cache = cacheManager.createCache(
+                  COMMENTS_CACHE_NAME,
+                  new MutableConfiguration<Long, Comment>()
+                          .setTypes(Long.class, Comment.class));
         }
         return cache;
     }
 }
 ----
 
-Inject the comments cache and the JPA comments manager in the `JCacheCommentsManager` class as follows:
+Now you can inject the comments cache in the `JCacheCommentsManager` class.
+Remember that we should fallback to the JPA implementation if something is not present in the cache.
+So we will need to inject JPACommentsManager as well.
+Do these as follows:
 
 [source,java]
 ----
@@ -394,7 +404,13 @@ public class JCacheCommentsManager {
     private Cache<Long, Comment> cache;
 ----
 
-Now implementat the methods of the `CommentsManager` interface using JCache as follows:
+Now implementat the methods of the `CommentsManager` interface using JCache.
+Let's start with getting all the comments.
+The JCache API is not really convenient for getting all the elements in the cache.
+It just gives you an iterator.
+We'll first check whether our cache is empty on not, by calling `hasNext()` on that iterator.
+If the cache is not empty, then we will return its content.
+Otherwise we'll go to the database, load all the comments present there into the cache and return them.
 
 [source,java]
 ----
@@ -415,6 +431,12 @@ Now implementat the methods of the `CommentsManager` interface using JCache as f
         dbComments.forEach(comment -> cache.put(comment.getId(), comment));
         return dbComments;
      }
+----
+
+Submitting a new comment means that it should be added to the cache as we as to the database:
+
+[source,java]
+----
 
      @Override
      public Comment submitComment(Comment newComment) {
@@ -422,7 +444,12 @@ Now implementat the methods of the `CommentsManager` interface using JCache as f
         cache.put(submittedComment.getId(), submittedComment);
         return submittedComment;
      }
+----
 
+And finally if you want to delete a comment, you have to make sure that it is removed from the cache:
+
+[source,java]
+----
      @Override
      public void deleteCommentWithId(Long commentId) {
         passThroughCommentsManager.deleteCommentWithId(commentId);
@@ -430,6 +457,108 @@ Now implementat the methods of the `CommentsManager` interface using JCache as f
      }
 ----
 
+Now you are ready to change the `CommentsManager` implementation in both `CommentsController` and `NewCommentController`:
+
+[source,java]
+----
+@Inject
+@JCache
+private CommentsManager commentsManager;
+----
+
+Redeploy your application and run it.
+
+Do the same for the `UserManager`.
+There the Cache should be of type `Cache<String, User>` with the user name being the key and the corresponding user object the value.
+We'll create the producer class in the `bg.jug.guestbook.users` package as follows:
+
+[source,java]
+----
+public class UserCacheProducer {
+
+    private static final String USERS_CACHE_NAME = "users";
+
+    @Inject
+    private CacheManager cacheManager;
+
+    @Produces
+    @ApplicationScoped
+    public Cache<String, User> getUsersCache() {
+        Cache<String, User> cache = cacheManager.getCache(USERS_CACHE_NAME, String.class, User.class);
+        if (cache == null) {
+            cache = cacheManager.createCache(
+                        USERS_CACHE_NAME,
+                        new MutableConfiguration<String, User>()
+                                .setTypes(String.class, User.class));
+        }
+        return cache;
+    }
+
+}
+----
+
+And then we'll implement the UserManager interface with JCache in mind:
+
+[source,java]
+----
+@JCache
+public class JCacheUserManager implements UserManager {
+
+    @Inject
+    @JPA
+    private UserManager passThroughUserManager;
+
+    @Inject
+    private Cache<String, User> cache;
+
+    @Override
+    public User getUser(String userName, String password) {
+        User user = cache.get(userName);
+        if (user != null) {
+            if (user.getPassword().equals(password)) {
+                return user;
+            } else {
+                return null;
+            }
+        }
+
+        User userInDb = passThroughUserManager.getUser(userName, password);
+        if (userInDb != null) {
+            cache.put(userName, userInDb);
+        }
+        return userInDb;
+    }
+
+    @Override
+    public void addUser(User newUser) {
+        passThroughUserManager.addUser(newUser);
+        cache.put(newUser.getUserName(), newUser);
+    }
+
+    @Override
+    public User findUserByName(String userName) {
+        User user = cache.get(userName);
+        if (user != null) {
+            return user;
+        }
+
+        User userInDb = passThroughUserManager.findUserByName(userName);
+        if (userInDb != null) {
+            cache.put(userName, userInDb);
+        }
+        return userInDb;
+    }
+}
+----
+
+And of course changet the `UserManager` implementation to `@JCache` in the three controllers: `LoginController`, `RegisterController` and `UserController`:
+
+[source,java]
+----
+@Inject
+@JCache
+private UserManager userManager;
+----
 
 In theory the above should be working once you deploy your application. However - we are not living in a perfect world and due to a bug in the Payara-Hazelcast bridge: https://github.com/payara/Payara/issues/318 we need to provide a workaround for directly placing custom `Comment` instances as values in the cache with causes `ClassNotFoundException`s to be thrown when working with the cache.
 For that reason the Payara team has provided a `PayaraValueHolder` class as part of the Payara utilities that must be included in the pom.xml of the project as follows:
