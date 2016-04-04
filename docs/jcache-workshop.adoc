@@ -164,8 +164,8 @@ public void deleteCommentWithId(Long commentId) {
 
 The users package contains the business classes dealing with users.
 Again, there is a `UserManager` interface, implemented by two request scoped beans - one using JPA and the other - the cache.
-It has three operations: finding a user in the DB by name and by name and password and also adds a new user.
-The second operation corresponds to login and and the tird tp the register feature of our guestbook.
+It has three operations: finding a user in the DB by name and by name and password and also adding a new user.
+The second operation corresponds to login and and the third to the register feature of our guestbook.
 One very special class is the `UserContext`.
 It is session scoped, which means that an instance of it will be created in the beginning of the browser session and will be destroyed once that session is invalidated.
 So it is a perfect means to use that for keeping session information, such as whether the user is logged in and if yes, which is that user.
@@ -278,6 +278,7 @@ It first makes sure that the user that performed the request has admin role.
 
 The final controller `NewCommentController` is responsible for handling new comments in the guestbook.
 Its GET method returns the newComment.jsp form, while its POST method handles the submission itself.
+
 ===== Miscellaneous
 
 There are some classes which functionality is not directly connected with any of the business components that we looked so far.
