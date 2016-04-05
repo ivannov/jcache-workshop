@@ -333,11 +333,11 @@ public void insertTestData() {
 * Implement `JCacheCommentsManager` and `JCacheUserManager`
 * Use the `JPACommentsManager` and `JPACommentsManager` inside the JCache impementation to pass through the data to and from the database, when it's not in the cache
 * Change the qualifier in the controllers so that they use the JCache implementation instead of the JPA one
-* You may consider creating a CDI producer that itself injects the `CacheManager` and creates the actual cache in a `@Produces` method
 
 *Features to demonstrate (basic Cache operations)*
 
 * `CacheManager::createCache`
+* `CacheManager::getCache`
 * `Cache::put`
 * `Cache::get`
 * `Cache::remove`
@@ -356,56 +356,56 @@ First include the JCache API as part of your project's pom.xml as follows:
 
 Our first task is to enable JCache for our comments.
 The key of the cache is the comment ID in our database (of type `Long`) and the value is the comment itself (of type `Comment`)
-You can create the cache in your JCache managers implementations.
-But as we are running in a Java EE application server (involving a CDI container), we'll do that in a separate class, which will act as a producer.
-We'll create a `javax.cache.Cache` instance there and we will inject it in our `JCacheCommentsManager` implementation.
-To do so create the `CommentsCacheProducer` cache provider class in the `bg.jug.guestbook.comment` package as follows:
+We will initialize the cache instance in your JCache managers implementations.
+In order to do that, we will first inject the CacheManager provided by Payara:
 
 [source,java]
 ----
 @ApplicationScoped
-public class CommentsCacheProducer {
-
-    private static final String COMMENTS_CACHE_NAME = "comments";
+public class JCacheCommentsManager implements CommentsManager {
 
     @Inject
     private CacheManager cacheManager;
 
-    @Produces
-    @ApplicationScoped
-    public Cache<Long, Comment> getCommentsCache() {
-        Cache<Long, Comment> cache = cacheManager.getCache(COMMENTS_CACHE_NAME, Long.class, Comment.class);
-        if (cache == null) {
-          cache = cacheManager.createCache(
-                  COMMENTS_CACHE_NAME,
-                  new MutableConfiguration<Long, Comment>()
-                          .setTypes(Long.class, Comment.class));
-        }
-        return cache;
-    }
 }
 ----
 
-Now you can inject the comments cache in the `JCacheCommentsManager` class.
+As we want our comments cache to be automatically created (or obtained if it is already created) upon the comments manager initialization, we can put it in a `@PostConstruct` method.
 Remember that we should fallback to the JPA implementation if something is not present in the cache.
 So we will need to inject JPACommentsManager as well.
-Do these as follows:
 
 [source,java]
 ----
 @ApplicationScoped
-public class JCacheCommentsManager {
+@JCache
+public class JCacheCommentsManager implements CommentsManager {
+
+    static final String COMMENTS_CACHE_NAME = "comments";
 
     @Inject
     @JPA
     private CommentsManager passThroughCommentsManager;
 
     @Inject
+    private CacheManager cacheManager;
+
     private Cache<Long, Comment> cache;
+
+    @PostConstruct
+    public Cache<Long, Comment> getCommentsCache() {
+        cache = cacheManager.getCache(COMMENTS_CACHE_NAME, Long.class, Comment.class);
+        if (cache == null) {
+            cache = cacheManager.createCache(
+                    COMMENTS_CACHE_NAME,
+                    new MutableConfiguration<Long, Comment>()
+                            .setTypes(Long.class, Comment.class));
+        }
+        return cache;
+    }
 ----
 
-Now implementat the methods of the `CommentsManager` interface using JCache.
-Let's start with getting all the comments.
+Now let's implement the methods of the `CommentsManager` interface using JCache.
+We'll start with getting all the comments.
 The JCache API is not really convenient for getting all the elements in the cache.
 It just gives you an iterator.
 We'll first check whether our cache is empty on not, by calling `hasNext()` on that iterator.
@@ -470,46 +470,34 @@ Redeploy your application and run it.
 
 Do the same for the `UserManager`.
 There the Cache should be of type `Cache<String, User>` with the user name being the key and the corresponding user object the value.
-We'll create the producer class in the `bg.jug.guestbook.users` package as follows:
-
-[source,java]
-----
-public class UserCacheProducer {
-
-    private static final String USERS_CACHE_NAME = "users";
-
-    @Inject
-    private CacheManager cacheManager;
-
-    @Produces
-    @ApplicationScoped
-    public Cache<String, User> getUsersCache() {
-        Cache<String, User> cache = cacheManager.getCache(USERS_CACHE_NAME, String.class, User.class);
-        if (cache == null) {
-            cache = cacheManager.createCache(
-                        USERS_CACHE_NAME,
-                        new MutableConfiguration<String, User>()
-                                .setTypes(String.class, User.class));
-        }
-        return cache;
-    }
-
-}
-----
-
-And then we'll implement the UserManager interface with JCache in mind:
+We'll implement the UserManager interface with JCache in mind:
 
 [source,java]
 ----
 @JCache
 public class JCacheUserManager implements UserManager {
 
-    @Inject
-    @JPA
-    private UserManager passThroughUserManager;
+  static final String USERS_CACHE_NAME = "users";
 
-    @Inject
-    private Cache<String, User> cache;
+  @Inject
+  @JPA
+  private UserManager passThroughUserManager;
+
+  @Inject
+  private CacheManager cacheManager;
+
+  private Cache<String, User> cache;
+
+  @PostConstruct
+  public void createUserCache() {
+      cache = cacheManager.getCache(USERS_CACHE_NAME);
+      if (cache == null) {
+          cache = cacheManager.createCache(
+                  USERS_CACHE_NAME,
+                  new MutableConfiguration<String, User>()
+                          .setTypes(String.class, User.class));
+      }
+  }
 
     @Override
     public User getUser(String userName, String password) {
@@ -559,6 +547,123 @@ And of course changet the `UserManager` implementation to `@JCache` in the three
 @JCache
 private UserManager userManager;
 ----
+
+=== Task 2: use the JCache annotations instead of manipulating the cache manually
+
+*Hints*
+
+* Use `@CacheDefaults` instead of injecting the cache
+* Remove code that puts data in the cache and replace it with `@CachePut`, `@CacheKey` and `@CacheValue` annotations
+* Remove code that reads data from the cache and replace it with `@CacheResult` and `@CacheKey` annotations
+
+*Features to demonstrate (Cache interceptor annotations)*
+
+* `@CacheDefaults`
+* `@CachePut`
+* `@CacheResult`
+* `@CacheKey`
+* `@CacheValue`
+* `@CacheResult`
+
+Sometimes all you want to do is simply get a value from the cache, which key is passed as a parameter to your method.
+Or insert a key value pair, which happen to be your method parameters.
+Let's look for example at the `JCacheUserManager`.
+The `findUserByName()` method just takes the parameter and looks it up in the cache.
+If it is not there, then it goes to the pass through implementation.
+It doesn't do anything else apart from that.
+
+For such situations the JCache specification has defined a group of annotations, which you can put on your methods to instruct the implementation to do the cache operations for you.
+First of all, let's declare the cache that will be used by our annotation based caching:
+
+[source,java]
+----
+@CacheDefaults(cacheName = JCacheUserManager.USERS_CACHE_NAME)
+public class JCacheUserManager implements UserManager {
+----
+
+Now it is time to tell JCache that our `findUserByName` method will look up a value in the cache and that it will look it up by key matching the only parameter.
+For that we use the `@CacheResult` and `@CacheKey` annotations:
+
+[source,java]
+----
+@CacheResult
+public User findUserByName(@CacheKey String userName) {
+    return passThroughUserManager.findUserByName(userName);
+}
+----
+
+As you might have noticed we have got rid of the direct call to the cache object - it is done by Payara for us.
+We only left the pass through call.
+
+WARNING: At the moment of writing of this hands on lab, it was impossible to combine `@CacheResult` methods with methods that work directly with the JCache API for one and the same cache. It resulted in `IllegalArgumentException`. Everything along with a workaround is explained in https://gist.github.com/ivannov/258ce072b01d0c55dcbc9079c50458d5[this gist]
+
+Next up, let's pretend that we badly need a new method in our `UserManager` - `adduser(String userName, User user)`.
+Let's add it to the interface and to both implementations.
+As long as `JCacheUserManger` is concerned, we'll implement it using `@CachePut`, `@CacheKey` and `@CacheValue` annotation and by just calling the pass through implementation:
+
+[source,java]
+----
+interface UserManager {
+
+    // ....
+    void addUser(String userName, User newUser);
+}
+
+@JPA
+@ApplicationScoped
+public class JPAUserManager implements UserManager {
+
+    @Inject
+    private EntityManager em;
+
+    // ....
+
+    @Transactional
+    @Override
+    public void addUser(User newUser) {
+        em.persist(newUser);
+    }
+
+    @Override
+    @Transactional
+    public void addUser(String userName, User newUser) {
+        addUser(newUser);
+    }
+}
+
+@ApplicationScoped
+@JCache
+@CacheDefaults(cacheName = JCacheUserManager.USERS_CACHE_NAME)
+public class JCacheUserManager implements UserManager {
+
+    static final String USERS_CACHE_NAME = "users";
+
+    @Inject
+    @JPA
+    private UserManager passThroughUserManager;
+
+    // ....
+
+    @Override
+    @CachePut
+    public void addUser(@CacheKey String userName, @CacheValue User newUser) {
+        passThroughUserManager.addUser(userName, newUser);
+    }
+}
+----
+
+Finally, let's look at the comments manager.
+There we have the `deleteCommentWithId` method, which is a perfect fit for the `@CacheRemove` annotation:
+
+[source,java]
+----
+@CacheRemove
+public void deleteCommentWithId(@CacheKey Long commentId) {
+    passThroughCommentsManager.deleteCommentWithId(commentId);
+}
+----
+
+
 
 In theory the above should be working once you deploy your application. However - we are not living in a perfect world and due to a bug in the Payara-Hazelcast bridge: https://github.com/payara/Payara/issues/318 we need to provide a workaround for directly placing custom `Comment` instances as values in the cache with causes `ClassNotFoundException`s to be thrown when working with the cache.
 For that reason the Payara team has provided a `PayaraValueHolder` class as part of the Payara utilities that must be included in the pom.xml of the project as follows:
@@ -729,7 +834,7 @@ We have several concrete types of a CacheEntryListener:
  - CacheEntryRemovedListener - for handling cache entry removal events
  - CacheEntryUpdatedListener - for handling cache entry update events
 
-We will create a cache entry event listener that logs information about entries added to the comments cache. In the `bg.jug.guestbook.comment` package add the `EntryCreatedLogListener` listener implementation as follows:
+We'll create a cache entry event listener that logs information about entries added to the comments cache. In the `bg.jug.guestbook.comment` package add the `EntryCreatedLogListener` listener implementation as follows:
 
 [source,java]
 ----
