@@ -328,12 +328,6 @@ public void insertTestData() {
 
 === Task 1: enable basic caching for the business components
 
-*Hints*
-
-* Implement `JCacheCommentsManager` and `JCacheUserManager`
-* Use the `JPACommentsManager` and `JPACommentsManager` inside the JCache impementation to pass through the data to and from the database, when it's not in the cache
-* Change the qualifier in the controllers so that they use the JCache implementation instead of the JPA one
-
 *Features to demonstrate (basic Cache operations)*
 
 * `CacheManager::createCache`
@@ -392,7 +386,7 @@ public class JCacheCommentsManager implements CommentsManager {
     private Cache<Long, Comment> cache;
 
     @PostConstruct
-    public Cache<Long, Comment> getCommentsCache() {
+    public void getCommentsCache() {
         cache = cacheManager.getCache(COMMENTS_CACHE_NAME, Long.class, Comment.class);
         if (cache == null) {
             cache = cacheManager.createCache(
@@ -400,7 +394,6 @@ public class JCacheCommentsManager implements CommentsManager {
                     new MutableConfiguration<Long, Comment>()
                             .setTypes(Long.class, Comment.class));
         }
-        return cache;
     }
 ----
 
@@ -539,7 +532,7 @@ public class JCacheUserManager implements UserManager {
 }
 ----
 
-And of course changet the `UserManager` implementation to `@JCache` in the three controllers: `LoginController`, `RegisterController` and `UserController`:
+And of course change the `UserManager` implementation to `@JCache` in the three controllers: `LoginController`, `RegisterController` and `UserController`:
 
 [source,java]
 ----
@@ -548,13 +541,7 @@ And of course changet the `UserManager` implementation to `@JCache` in the three
 private UserManager userManager;
 ----
 
-=== Task 2: use the JCache annotations instead of manipulating the cache manually
-
-*Hints*
-
-* Use `@CacheDefaults` instead of injecting the cache
-* Remove code that puts data in the cache and replace it with `@CachePut`, `@CacheKey` and `@CacheValue` annotations
-* Remove code that reads data from the cache and replace it with `@CacheResult` and `@CacheKey` annotations
+=== Task 2: Use the JCache annotations instead of manipulating the cache manually
 
 *Features to demonstrate (Cache interceptor annotations)*
 
@@ -663,7 +650,70 @@ public void deleteCommentWithId(@CacheKey Long commentId) {
 }
 ----
 
+=== Task 3: Expiry policy
 
+*Features to demonstrate*
+
+* `CacheConfiguration.setExpiryPolicyFactory()`
+
+To supply an expiry policy for the comments cache refactor the `getCommentsCache()` in `JCacheCommentsManager` class as follows:
+
+[source,java]
+----
+@PostConstruct
+public void getCommentsCache() {
+    cache = cacheManager.getCache(COMMENTS_CACHE_NAME, Long.class, Comment.class);
+    if (cache == null) {
+        cache = cacheManager.createCache(
+                COMMENTS_CACHE_NAME,
+                new MutableConfiguration<Long, Comment>()
+                        .setTypes(Long.class, Comment.class)
+                        .setExpiryPolicyFactory(
+                                FactoryBuilder.factoryOf(
+                                        new AccessedExpiryPolicy(
+                                                new Duration(TimeUnit.MINUTES, 3)))));
+    }
+}
+----
+
+As you can see an expiry policy factory is used to specify the expiry policy.
+In that case we specify an expiry of three minutes for the cache entries upon creation.
+
+Note that at this point you may add additional code to your comments JSP page in order to observe the currently set expiry policy for a cache.
+The JCache API itself provides limited capabilities to inspect the current expiry policy - we can have to store configuration for further statistics.
+We can, however, check that an access policy is in effect by retrieving a Cache configuration instance.
+
+In order to check that an expiry policy is set we can add a `getStatistics()` default method to the `CommentsManager` interface:
+
+[source,java]
+----
+	default Object getStatistics() {
+		return new Object();
+	}
+----
+
+Then we can provide implementation of the above method for the `JCacheCommentsManager` class:
+
+[source,java]
+----
+public Object getStatistics() {
+    return cache.getConfiguration(CompleteConfiguration.class);
+}
+----
+
+After that, add a statistics instance to the model in the `showAllComments` method of the `CommentsController` class:
+
+[source,java]
+----
+	models.put("statistics", commentsManager.getStatistics());
+----
+
+Finally, add a display in comments.jsp of whether an expiry policy is set (or not) by checking whether there is an expiry policy factory in place:
+
+[source,html]
+----
+ 	<br /><br /><br /><span>Expiry policy is : ${statistics.getExpiryPolicyFactory() != null ? 'set' : 'not set'}</span>
+----
 
 In theory the above should be working once you deploy your application. However - we are not living in a perfect world and due to a bug in the Payara-Hazelcast bridge: https://github.com/payara/Payara/issues/318 we need to provide a workaround for directly placing custom `Comment` instances as values in the cache with causes `ClassNotFoundException`s to be thrown when working with the cache.
 For that reason the Payara team has provided a `PayaraValueHolder` class as part of the Payara utilities that must be included in the pom.xml of the project as follows:
@@ -749,8 +799,6 @@ public class JCacheCommentsManager implements CommentsManager {
 }
 ----
 
-Re-deploy the application and check that it is working with your new JCache provider.
-
 === Utilize additional JCache APIs
 
 Features to demonstrate (supporting JCache APIs):
@@ -760,70 +808,7 @@ Features to demonstrate (supporting JCache APIs):
 * using `Entry` to provide composite atomic operations over mutable representations of `Cache` entries
 * using `CacheWriter` /  `CacheLoader` instances in order to establish cache integrations (for read-through/write-through) operations with other systems
 
-==== ExpiryPolicy
 
-To supply an expiry policy for the comments cache refactor the `getCommentsCache()` in `bg.jug.guestbook.comment.CommentsCacheProducer` as follows:
-
-[source,java]
-----
-	@Produces
-	@RequestScoped
-	public Cache<Long, PayaraValueHolder> getCommentsCache() {
-
-		Cache<Long, PayaraValueHolder> cache = cacheManager.getCache(COMMENTS_CACHE_NAME,
-				Long.class, PayaraValueHolder.class);
-		if (cache == null) {
-			MutableConfiguration<Long, PayaraValueHolder> cacheConfig = new MutableConfiguration<Long, PayaraValueHolder>();
-			cacheConfig.setTypes(Long.class, PayaraValueHolder.class);
-			cacheConfig.setExpiryPolicyFactory(FactoryBuilder
-					.factoryOf(new AccessedExpiryPolicy(new Duration(
-							TimeUnit.MINUTES, 3))));
-			cache = cacheManager.createCache(COMMENTS_CACHE_NAME, cacheConfig);
-		}
-		return cache;
-	}
-----
-
-As you can see an expiry policy factory is used to specify the expiry policy. In that case we specify an expiry of three minutes for the cache entries upon creation.
-
-Note that at this point you may add additional code to your comments JSP page in order to observe the currently set expiry policy for a cache. The JCache API itself provides limited
-capabilities to inspect the current expiry policy - we can have to store configuration for further statistics. We can, however, check that an access policy is in effect by retrieving a Cache configuration instance._
-
-In order to check that an expiry policy is set we can do the following:
-
- - add the  `getStatistics()` default method to the `CacheManager` interface:
-
-[source,java]
-----
-	default Object getStatistics() {
-		return new Object();
-	}
-----
-
- - provide implementation of the above method for the `JCacheCommentsManager` class:
-
-[source,java]
-----
-    @SuppressWarnings("unchecked")
-	@Override
-    public Object getStatistics() {
-		return cache.getConfiguration(CompleteConfiguration.class);
-    }
-----
-
- - add a statistics instance to the model of the `prepareModelAndView` method of the `prepareModelAndView` class:
-
-[source,java]
-----
-	models.put("statistics", commentsManager.getStatistics());
-----
-
- - add a display of whether an expiry policy is set (or not) by checking whether there is an expiry policy factory in place:
-
-[source,html]
-----
- 	<br /><br /><br /><span>Expiry policy is : ${statistics.getExpiryPolicyFactory() != null ? 'set' : 'not set'}</span>
-----
 
 ==== CacheEntryListener
 
